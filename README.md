@@ -2,9 +2,9 @@
 
 A 6-axis desk robot arm with a **wrist that spins endlessly**. Power reaches the hand through an inductive link across the roll joint, so no cable ever twists. Two bevel differentials move elbow and wrist. *Idra* is Italian for hydra.
 
-[![IDRA in the simulator, with a slice of its reachable space](docs/assets/preview.png)](https://OWNER.github.io/idra/)
+[![IDRA in the simulator, with a slice of its reachable space](docs/assets/preview.png)](https://enricomichelato.github.io/idra/)
 
-**[▶ Drive IDRA in your browser](https://OWNER.github.io/idra/)**: press an arrow key and you are in control. Works on any computer; on a phone there is an on-screen pad. Nothing to install.
+**[▶ Drive IDRA in your browser](https://enricomichelato.github.io/idra/)**: press an arrow key and you are in control. Works on any computer; on a phone there is an on-screen pad. Nothing to install.
 
 IDRA is a design model: nothing has been built yet.
 
@@ -29,7 +29,7 @@ The simulator has a keyboard deck under the 3D view: the keys light up as you pr
 
 When a move is impossible, the panel in the top left says why: out of reach, a joint limit, or fingers on the desk. **Reachable space** draws the cloud of points the grip can reach.
 
-More pages: **[kinematics, step by step](https://OWNER.github.io/idra/kinematics.html)** and **[passive hand](https://OWNER.github.io/idra/passive-hand.html)**, with schematics and a bench test plan.
+More pages: **[kinematics, step by step](https://enricomichelato.github.io/idra/kinematics.html)** and **[passive hand](https://enricomichelato.github.io/idra/passive-hand.html)**, with schematics and a bench test plan.
 
 ## What makes it different
 
