@@ -1,0 +1,174 @@
+<title>Passive Hand</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one reading column; schematics break out wider in scrollable frames; same visual family as the kinematics page */
+:root{
+  --paper:#eef1f4; --panel:#ffffff; --ink:#18212c; --muted:#5a6676; --rule:#d3dae3;
+  --accent:#d9531e; --accent-soft:#f8e2d6; --ok:#2f8a57; --close:#2e6bd6; --open:#c26a12;
+  --f-disp:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0f141a; --panel:#161d26; --ink:#e4e9ef; --muted:#93a0af; --rule:#28323f;
+  --accent:#ff7d45; --accent-soft:#3a2418; --ok:#4fbf7f; --close:#6a9cf0; --open:#f0a050; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0f141a; --panel:#161d26; --ink:#e4e9ef; --muted:#93a0af; --rule:#28323f;
+  --accent:#ff7d45; --accent-soft:#3a2418; --ok:#4fbf7f; --close:#6a9cf0; --open:#f0a050; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15.5px/1.62 var(--f-body)}
+.wrap{max-width:1000px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 72px}
+header{border-bottom:1px solid var(--rule);padding-bottom:16px;margin-bottom:8px}
+h1{font:800 clamp(30px,5vw,46px)/1.04 var(--f-disp);font-stretch:78%;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:8px 0 0;max-width:64ch}
+h2{font:700 24px/1.2 var(--f-disp);font-stretch:85%;margin:38px 0 10px;text-wrap:balance}
+h3{font:600 16px/1.3 var(--f-body);margin:22px 0 6px}
+p,li{max-width:70ch}
+p{margin:8px 0}
+code,.mono{font:13.5px var(--f-mono)}
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:18px 0 6px}
+.blk{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:10px 12px;font-size:13.5px;min-width:0}
+.blk b{display:block;font:600 11px var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.blk.side{border-left:3px solid var(--accent)}
+.legend{font:12px var(--f-mono);color:var(--muted)}
+.states{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0}
+.st{border:1px solid var(--rule);border-radius:8px;padding:12px;background:var(--panel);min-width:0}
+.st .f{font:600 20px var(--f-mono);font-variant-numeric:tabular-nums}
+.st .w{font-weight:600;margin-top:2px}
+.st p{font-size:13.5px;color:var(--muted);margin:4px 0 0}
+.st.c .f{color:var(--close)}.st.o .f{color:var(--open)}.st.h .f{color:var(--muted)}
+.sch{background:var(--panel);border:1px solid var(--rule);border-radius:10px;margin:12px 0;overflow-x:auto}
+.sch .in{min-width:760px;padding:14px 12px;color:var(--ink)}
+.sch svg{display:block;width:100%;height:auto}
+.sch svg text{font-family:var(--f-body)}
+.cap{font-size:13px;color:var(--muted);margin:-4px 0 14px}
+.tw{overflow-x:auto;margin:10px 0}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font:600 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+td.v{font-family:var(--f-mono);white-space:nowrap}
+.eq{font:13.5px/1.75 var(--f-mono);background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:10px 14px;margin:10px 0;overflow-x:auto;white-space:pre}
+.eq .c{color:var(--muted)}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 8px 8px 0;margin:14px 0;max-width:72ch}
+ol.bench{list-style:none;padding:0;margin:12px 0;display:flex;flex-direction:column;gap:8px;counter-reset:b}
+ol.bench li{counter-increment:b;background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:10px 12px 10px 48px;position:relative;max-width:none}
+ol.bench li::before{content:counter(b);position:absolute;left:12px;top:10px;width:24px;height:24px;border-radius:5px;background:var(--ink);color:var(--paper);font:600 12.5px/24px var(--f-mono);text-align:center}
+ol.bench li.done{opacity:.6}ol.bench li.done::before{background:var(--ok);content:"✓"}
+ol.bench label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+ol.bench input{margin-top:5px;accent-color:var(--ok);flex:none}
+ol.bench .ok{display:block;font-size:13px;color:var(--muted)}
+input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:640px){.states{grid-template-columns:minmax(0,1fr)}}
+</style>
+
+<div class="wrap">
+<header>
+  <h1>Passive hand</h1>
+  <p class="sub">No microcontroller, no radio and no firmware in the hand. The wrist flange picks the frequency of the inductive carrier: at 98 kHz the hand closes, at 207 kHz it opens, with the carrier off it holds still. Schematics, starting values and a bench test plan.</p>
+</header>
+
+<div class="flow" aria-label="Signal path">
+  <div class="blk side"><b>Flange</b>Camera XIAO: generates the PWM and reads the current</div>
+  <div class="blk side"><b>Flange</b>IR2104 bridge + 2 MOSFETs, 0.1 Ω shunt</div>
+  <div class="blk"><b>Inductive link</b>Ø44 ferrite cups, the roll spins endlessly</div>
+  <div class="blk"><b>Hand</b>Rectifier → VM 10–15 V → DRV8871 → motor</div>
+  <div class="blk"><b>Hand</b>Two LC filters: the frequency picks IN1 or IN2</div>
+</div>
+<p class="legend">Orange edge = fixed side of the roll (flange). Everything else turns with the hand.</p>
+
+<h2>What the hand does with each command</h2>
+<div class="states">
+  <div class="st c"><div class="f">98 kHz</div><div class="w">close</div><p>IN1 goes high. When the Fin Ray fingers touch the object the motor stalls, the current rises and the flange turns the bridge off.</p></div>
+  <div class="st o"><div class="f">207 kHz</div><div class="w">open</div><p>IN2 goes high. With the fingers fully open the NC limit switch opens, IN2 drops and the motor stops by itself.</p></div>
+  <div class="st h"><div class="f">off</div><div class="w">hold</div><p>No power in the hand. The worm drive is self-locking and holds the grip.</p></div>
+</div>
+
+<h2>Hand schematic</h2>
+<div class="sch"><div class="in">__RX_SVG__</div></div>
+<p class="cap">The power path is a plain rectifier. The two filters take their signal from the top coil terminal, which swings between 0 and VM, and only choose the direction.</p>
+
+<h3>Why these values</h3>
+<div class="eq">f₀ = 1 / (2π·√(L·C))      2.2 mH + 1.2 nF → 98 kHz      2.2 mH + 270 pF → 207 kHz
+Q  = √(L/C) / R          ≈ 2.9 on both (470 Ω and 1 kΩ)
+
+<span class="c">right channel:</span>  the coil terminal swings 0…VM → fundamental ≈ 0.64·VM
+                with VM = 10 V: ≈ 6.4 V peak → ≈ 5.8 V after the diode → IN ≈ 2.5 V  <span class="c">(needs > 1.5 V)</span>
+<span class="c">wrong channel:</span>  about 21 % gets through → < 2 V after the diode → blocked by the 3.3 V zener
+<span class="c">maximum force:</span>  I_lim ≈ 64 / R_ILIM[kΩ]  → 82 kΩ ≈ 0.78 A  <span class="c">(check the formula in the datasheet)</span></div>
+<p>The low Q is on purpose: with ±10% tolerance on inductors and capacitors the filter stays centred well enough. The zener does the separating, not the filter selectivity.</p>
+<div class="tw"><table>
+  <thead><tr><th>Component</th><th>Value</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>Rectifier</td><td class="v">4 × SS24</td><td>2 A 40 V Schottky</td></tr>
+    <tr><td>VM capacitor</td><td class="v">47 µF 50 V</td><td>Ø8 × 12 electrolytic, in the old capacitor seat</td></tr>
+    <tr><td>Protection</td><td class="v">SMBJ30A + 1 µF</td><td>the TVS keeps VM below the DRV's 50 V with no load</td></tr>
+    <tr><td>H-bridge</td><td class="v">DRV8871</td><td>6.5–45 V, current limit set by a resistor, no programming</td></tr>
+    <tr><td>Filters</td><td class="v">2 × 2.2 mH</td><td>shielded SMD, self-resonance above 1 MHz</td></tr>
+    <tr><td></td><td class="v">1.2 nF · 270 pF</td><td>C0G/NP0, stable with temperature</td></tr>
+    <tr><td></td><td class="v">470 Ω · 1 kΩ</td><td>1206: they warm up a little only while the hand moves</td></tr>
+    <tr><td>Detectors</td><td class="v">1N4148W, 4.7 nF, 10 kΩ</td><td>τ = 47 µs: fast enough for speed bursts</td></tr>
+    <tr><td>Threshold and protection</td><td class="v">3.3 V zener · 47 kΩ · 5.6 V zener</td><td>the DRV inputs stand 7 V</td></tr>
+    <tr><td>Limit switch</td><td class="v">KW10, NC contact</td><td>already in the model, now in series with IN2</td></tr>
+  </tbody>
+</table></div>
+
+<h2>Flange schematic</h2>
+<div class="sch"><div class="in">__TX_SVG__</div></div>
+<p class="cap">The bridge is not tuned (the series capacitor resonates much lower), so both frequencies pass and the MOSFETs switch at zero voltage. The shunt sits under local ground, so it measures the current drawn from the 24 V.</p>
+<ul>
+  <li><b>MOSFETs:</b> N-channel, at least 40 V (60 V is better), R<sub>DS(on)</sub> ≤ 50 mΩ at 10 V, Q<sub>g</sub> ≤ 20 nC.</li>
+  <li><b>No ready-made "ZVS" module:</b> it oscillates at its own frequency and cannot be commanded.</li>
+  <li><b>XIAO:</b> three pins (PWM, enable, ADC). The INA180 runs from the XIAO's 3.3 V. The cable to the camera goes from 2 to 5 wires (5 V, ground, PWM, enable, current), in the same flange groove.</li>
+  <li><b>IR2104 input threshold:</b> about 3 V, so the XIAO's 3.3 V is enough but close to the limit: check the datasheet of the part you buy.</li>
+</ul>
+
+<h2>What the XIAO firmware does</h2>
+<div class="eq">open()        207 kHz until the current drops to the idle level (limit switch)   → finger zero
+close()       98 kHz until the current stays above the stall threshold for 30 ms   → bridge off
+open_to(θ)    open(), then close for a time t = k·θ calibrated once
+speed         2–5 kHz bursts with variable duty (the DRV sees a PWM on its inputs)
+hold          bridge off: the worm holds
+safety        4 s timeout on every move; the emergency button cuts the 24 V and everything stops</div>
+
+<h2>Does the worm hold?</h2>
+<p>Yes, as long as it is not greased. Module 2, 16 mm pitch diameter, single start: the lead angle is <span class="mono">atan(2/16) = 7.1°</span>. A worm is self-locking when the friction angle <span class="mono">atan(µ / cos 20°)</span> is larger than the lead angle, that is for µ above about 0.12.</p>
+<div class="tw"><table>
+  <thead><tr><th>Friction µ</th><th>Condition</th><th>Friction angle</th><th>Result</th></tr></thead>
+  <tbody>
+    <tr><td class="v">0.08</td><td>well-greased PETG</td><td class="v">4.9°</td><td>back-drives</td></tr>
+    <tr><td class="v">0.12</td><td>PETG with a little lubricant</td><td class="v">7.3°</td><td>borderline</td></tr>
+    <tr><td class="v">0.20–0.30</td><td>dry PETG on PETG</td><td class="v">12–18°</td><td>holds, with margin</td></tr>
+  </tbody>
+</table></div>
+<p>At most a film of dry PTFE. On top of that, the motor gearbox already brakes a lot by itself. The price is efficiency: about 36% forwards, so the motor works a bit harder to squeeze.</p>
+
+<h2>Bench test</h2>
+<p>Do this before touching the CAD, with under €10 of parts. The ticks are saved only in this browser.</p>
+<ol class="bench" id="bench">
+  <li><label><input type="checkbox" id="b1"><span>Measure the inductance of the two coils in their cups, at the real gap (a 3 mm spacer in between).<span class="ok">With an LCR meter, or with a known capacitor in parallel and a signal generator: the resonance gives L = 1/((2πf)²C).</span></span></label></li>
+  <li><label><input type="checkbox" id="b2"><span>TX alone: PWM at 98 and 207 kHz into the bridge, hand disconnected.<span class="ok">Passes if the MOSFETs stay lukewarm and the rectified open-circuit voltage on the RX coil stays below 30 V.</span></span></label></li>
+  <li><label><input type="checkbox" id="b3"><span>Power: rectifier, 47 µF and a 15 Ω, 10 W resistor as the load.<span class="ok">Passes if VM stays between 10 and 15 V at both frequencies. Below 9 V, add turns to the RX coil (for example from 18 to 24).</span></span></label></li>
+  <li><label><input type="checkbox" id="b4"><span>Filters: scope on IN1 and IN2, then sweep the PWM frequency.<span class="ok">Passes if the right channel goes above 2 V and the wrong one stays at 0. Note the two frequencies where IN peaks: those go in the firmware.</span></span></label></li>
+  <li><label><input type="checkbox" id="b5"><span>All together: DRV8871 and motor, without the hand.<span class="ok">98 kHz turns one way, 207 kHz the other, off stops. Pressing the limit switch interrupts the "open" rotation.</span></span></label></li>
+  <li><label><input type="checkbox" id="b6"><span>Current: log the XIAO ADC while the hand closes on an object and opens up to the limit switch.<span class="ok">This gives the two firmware thresholds: stall and idle.</span></span></label></li>
+  <li><label><input type="checkbox" id="b7"><span>Worm: close on an object, turn the bridge off and shake the hand in every position.<span class="ok">Passes if the fingers do not back off.</span></span></label></li>
+  <li><label><input type="checkbox" id="b8"><span>Heat: 20 open/close cycles in a row.<span class="ok">Cups, MOSFETs and DRV stay below 50 °C: no problem for the PETG hand.</span></span></label></li>
+</ol>
+
+<h2>What changes in the model</h2>
+<ul>
+  <li><b>Hand v2.3:</b> the ESP32-C3 and the power module are gone. In their place, a single 20 × 25 mm board (rectifier, DRV8871, two filters) in the 0° rail. The 47 µF capacitor keeps its seat; the 240° rail is no longer needed. Hand height and grip position are unchanged.</li>
+  <li><b>Flange:</b> the TX driver becomes the bridge with shunt and current sensor, in the same 30 × 20 × 9 mm envelope.</li>
+</ul>
+</div>
+
+<script>
+const KEY='passive-hand-bench';
+let st={};try{st=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
+document.querySelectorAll('#bench input').forEach(cb=>{
+  cb.checked=!!st[cb.id];cb.closest('li').classList.toggle('done',cb.checked);
+  cb.addEventListener('change',()=>{st[cb.id]=cb.checked;cb.closest('li').classList.toggle('done',cb.checked);try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}});
+});
+</script>

@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head><body>
+<nav aria-label="Project pages" style="display:flex;flex-wrap:wrap;gap:6px 18px;max-width:1320px;margin:0 auto;padding:12px max(16px,env(safe-area-inset-left,0px)) 0;font:13px/1.4 system-ui,sans-serif;color:var(--muted)"><a href="./" style="color:inherit;text-decoration:none">Simulator</a><a href="kinematics.html" aria-current="page" style="color:inherit;text-decoration:underline">Kinematics</a><a href="passive-hand.html" style="color:inherit;text-decoration:none">Passive hand</a><a href="https://github.com/OWNER/idra" style="color:inherit;text-decoration:none">Repository</a></nav>
+<title>Arm Kinematics</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: sticky 3D bench on the left (robot + controls), numbered derivation steps on the right; one column on phones */
+:root{
+  --paper:#eef1f4; --panel:#ffffff; --ink:#18212c; --muted:#5a6676; --rule:#d3dae3;
+  --accent:#d9531e; --accent-soft:#f8e2d6; --ok:#2f8a57; --warn:#c08a12; --bad:#c23b32;
+  --ax-x:#d1443b; --ax-y:#2e9a55; --ax-z:#2e6bd6;
+  --l-up:#3d5a80; --l-fo:#6b8fb3; --l-ha:#b26b3c; --base:#7d8794; --grid:#d8dee6;
+  --f-disp:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0f141a; --panel:#161d26; --ink:#e4e9ef; --muted:#93a0af; --rule:#28323f;
+  --accent:#ff7d45; --accent-soft:#3a2418; --ok:#4fbf7f; --warn:#e0b040; --bad:#ef6a5f;
+  --ax-x:#ef6a5f; --ax-y:#56c27f; --ax-z:#6a9cf0;
+  --l-up:#7f9fc6; --l-fo:#a9c3de; --l-ha:#dd9a6a; --base:#5f6a77; --grid:#222b36; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0f141a; --panel:#161d26; --ink:#e4e9ef; --muted:#93a0af; --rule:#28323f;
+  --accent:#ff7d45; --accent-soft:#3a2418; --ok:#4fbf7f; --warn:#e0b040; --bad:#ef6a5f;
+  --ax-x:#ef6a5f; --ax-y:#56c27f; --ax-z:#6a9cf0;
+  --l-up:#7f9fc6; --l-fo:#a9c3de; --l-ha:#dd9a6a; --base:#5f6a77; --grid:#222b36; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15px/1.6 var(--f-body)}
+.wrap{max-width:1320px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 64px}
+header.top{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:8px 24px;margin-bottom:20px;border-bottom:1px solid var(--rule);padding-bottom:14px}
+h1{font:800 clamp(28px,4vw,40px)/1.05 var(--f-disp);font-stretch:78%;letter-spacing:.01em;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:4px 0 0;max-width:62ch}
+.spec{font:12px/1.5 var(--f-mono);color:var(--muted);text-align:right}
+.grid{display:grid;grid-template-columns:minmax(0,560px) minmax(0,1fr);gap:28px;align-items:start}
+.bench{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);background:var(--panel);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.stage{position:relative;height:min(56vh,520px);min-height:300px;touch-action:none;cursor:grab}
+.stage:active{cursor:grabbing}
+canvas{display:block;width:100%;height:100%}
+.hud{position:absolute;left:10px;top:8px;right:10px;display:flex;flex-wrap:wrap;gap:6px;pointer-events:none}
+.chip{font:500 11.5px/1 var(--f-mono);padding:5px 7px;border-radius:5px;border:1px solid var(--rule);background:var(--panel);color:var(--muted);white-space:nowrap}
+.chip.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 45%,var(--rule))}
+.chip.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 55%,var(--rule))}
+.chip.bad{color:var(--bad);border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--panel))}
+.hint{position:absolute;right:10px;bottom:8px;font:11px var(--f-mono);color:var(--muted);pointer-events:none}
+.controls{border-top:1px solid var(--rule);padding:12px 14px 14px}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:7px;overflow:hidden;margin-bottom:10px}
+.seg button{font:600 13px var(--f-body);border:0;background:transparent;color:var(--muted);padding:7px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.seg button:focus-visible,.sol:focus-visible,.btn:focus-visible,input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sl{display:grid;grid-template-columns:118px minmax(0,1fr) 64px;align-items:center;gap:10px;font-size:13px;min-height:30px}
+.sl label{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl label b{font:600 12px var(--f-mono);color:var(--accent);margin-right:4px}
+.sl output{font:500 12.5px var(--f-mono);text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.sols{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.sol{font:500 11px/1.25 var(--f-mono);text-align:left;border:1px solid var(--rule);background:transparent;color:var(--ink);border-radius:5px;padding:5px 7px;cursor:pointer}
+.sol[disabled]{color:var(--muted);opacity:.55;cursor:not-allowed;text-decoration:line-through}
+.sol[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.note{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+.steps{display:flex;flex-direction:column;gap:14px;min-width:0}
+.step{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:18px 20px 16px;scroll-margin-top:16px;transition:border-color .2s}
+.step.on{border-color:var(--accent)}
+.step h2{display:flex;gap:12px;align-items:baseline;font:700 21px/1.2 var(--f-disp);font-stretch:85%;margin:0 0 8px;text-wrap:balance;cursor:pointer}
+.step h2 .n{font:600 13px var(--f-mono);color:var(--paper);background:var(--ink);border-radius:4px;padding:2px 7px;flex:none}
+.step.on h2 .n{background:var(--accent)}
+.step p{margin:8px 0;max-width:68ch}
+.eq{font:13.5px/1.75 var(--f-mono);background:color-mix(in srgb,var(--paper) 70%,var(--panel));border:1px solid var(--rule);border-radius:7px;padding:10px 12px;margin:10px 0;overflow-x:auto;white-space:pre}
+.eq .c{color:var(--muted)}
+.eq output,.live{color:var(--accent);font-variant-numeric:tabular-nums}
+.tw{overflow-x:auto;margin:10px 0}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font:600 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+td.num{font-family:var(--f-mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td code,p code,li code{font:12.5px var(--f-mono)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:baseline}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.btn{font:600 12.5px var(--f-body);border:1px solid var(--rule);background:transparent;color:var(--ink);border-radius:6px;padding:6px 10px;cursor:pointer}
+.btn:hover,.sol:hover:not([disabled]){border-color:var(--accent)}
+ul{padding-left:20px;margin:8px 0}li{margin:3px 0;max-width:66ch}
+.key{display:flex;flex-wrap:wrap;gap:4px 14px;font:12px var(--f-mono);color:var(--muted);margin-top:6px}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}.bench{position:relative;top:0}.stage{height:360px}.spec{text-align:left}}
+@media (max-width:440px){.sl{grid-template-columns:92px minmax(0,1fr) 56px}.step{padding:14px 14px 12px}}
+@media (prefers-reduced-motion:reduce){.step{transition:none}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div>
+    <h1>Arm kinematics, step by step</h1>
+    <p class="sub">From the six joint angles to the fingertips, and back. The formulas are the ones in <code>control/kinematics.py</code>; the schematic robot runs them live, and each step highlights its part.</p>
+  </div>
+  <div class="spec">Lu 205 · Lf 240 · d6 215.8 mm<br>shoulder 183 mm above the desk · 6 joints</div>
+</header>
+
+<div class="grid">
+<section class="bench" aria-label="Interactive robot">
+  <div class="stage" id="stage">
+    <canvas id="cv" aria-label="Schematic 3D view of the arm"></canvas>
+    <div class="hud" id="hud"></div>
+    <div class="hint">drag to orbit · scroll to zoom</div>
+  </div>
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Mode">
+      <button id="m-fk" aria-pressed="true">Forward · joints</button>
+      <button id="m-ik" aria-pressed="false">Inverse · grip</button>
+    </div>
+    <div id="fk-ctl"></div>
+    <div id="ik-ctl" hidden></div>
+  </div>
+</section>
+
+<div class="steps" id="steps">
+
+<article class="step" data-s="1" id="s1">
+  <h2><span class="n">1</span>Six joints, six angles</h2>
+  <p>The reference frame has its origin on the shoulder axis, which crosses the base rotation axis. z points up. With every angle at zero the arm stands straight up; a positive shoulder angle leans it towards +y. In the robot, each joint shows its axis as a dashed line.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Angle</th><th>Moves</th><th>Axis</th><th>Limits</th><th>Encoder</th></tr></thead>
+    <tbody>
+      <tr><td><b>q1</b></td><td>base (yaw)</td><td>base z</td><td class="num">±170°</td><td>Hall sensor for homing</td></tr>
+      <tr><td><b>q2</b></td><td>shoulder</td><td>x, 183 mm above the desk</td><td class="num">−30…90°</td><td>step count</td></tr>
+      <tr><td><b>q3</b></td><td>elbow flexion</td><td>x, 205 mm from the shoulder</td><td class="num">−60…105°</td><td>AS5600 on the shaft</td></tr>
+      <tr><td><b>q4</b></td><td>pronation</td><td>forearm axis</td><td class="num">±180°</td><td>AS5600 on the idler satellite</td></tr>
+      <tr><td><b>q5</b></td><td>wrist pitch</td><td>x, through the wrist centre</td><td class="num">±90°</td><td>AS5600 on the axle</td></tr>
+      <tr><td><b>q6</b></td><td>wrist roll</td><td>hand axis</td><td class="num">endless</td><td>AS5600 in the T fitting</td></tr>
+    </tbody>
+  </table></div>
+  <p>q2, q3 and q5 rotate about x (they bend); q1, q4 and q6 rotate about z (they spin). Shoulder and elbow are parallel with no sideways offsets, which makes everything else much simpler.</p>
+</article>
+
+<article class="step" data-s="2" id="s2">
+  <h2><span class="n">2</span>Forward kinematics: the chain</h2>
+  <p>Each joint is a rotation and each bone a translation along z. Multiplying the matrices from left to right walks from the base to the fingers: each factor starts from the frame left by the previous one.</p>
+  <div class="eq">T = Rz(q1)·Rx(−q2)·Tz(Lu)·Rx(−q3)·Rz(q4)·Tz(Lf)·Rx(q5)·Rz(q6)·Tz(d6)
+
+<span class="c">     ⎡1  0   0 ⎤          ⎡c −s  0⎤
+Rx = ⎢0  c  −s ⎥     Rz = ⎢s  c  0⎥     c = cos θ, s = sin θ
+     ⎣0  s   c ⎦          ⎣0  0  1⎦</span></div>
+  <p>The result is a 4×4 matrix: the first three columns are the hand x, y and z axes, the fourth is the grip position. For the current pose:</p>
+  <div class="eq" id="v-T"></div>
+  <p>In the robot, the coloured frames (x red, y green, z blue) are the intermediate frames of the chain: shoulder, elbow, wrist and grip.</p>
+</article>
+
+<article class="step" data-s="3" id="s3">
+  <h2><span class="n">3</span>The spherical wrist trick</h2>
+  <p>The pronation (q4), pitch (q5) and roll (q6) axes all pass through one point: the wrist centre, highlighted in the robot. Turning about any of these axes does not move that point. So its position depends only on q1, q2 and q3:</p>
+  <div class="eq">r = Lu·sin q2 + Lf·sin(q2+q3)      <span class="c">distance from the base axis</span>
+z = Lu·cos q2 + Lf·cos(q2+q3)      <span class="c">height above the shoulder</span>
+p_wrist = ( −r·sin q1 ,  r·cos q1 ,  z )
+
+<span class="c">now:</span> r = <output id="v-r"></output>   z = <output id="v-z"></output>   p_wrist = <output id="v-pw"></output></div>
+  <p>This splits the problem into two problems with three unknowns each: the first three joints bring the wrist to the right point, the last three orient the hand. Industrial six-axis arms use the same scheme (it is called Pieper decoupling).</p>
+</article>
+
+<article class="step" data-s="4" id="s4">
+  <h2><span class="n">4</span>Inverse, part one: where the wrist goes</h2>
+  <p>Start from the desired grip point p and the finger direction a (the hand z axis). The wrist sits d6 further back along a:</p>
+  <div class="eq">p_wrist = p − d6·a                                  = <output id="v-pw2"></output>
+q1 = atan2(−x, y)                                   = <output id="v-q1"></output>
+r = √(x² + y²)   d² = r² + z²                       d = <output id="v-d"></output> mm  <span class="c">(max 435)</span>
+cos q3 = (d² − Lu² − Lf²) / (2·Lu·Lf)               q3 = <output id="v-q3"></output>
+q2 = atan2(r, z) − atan2(Lf·sin q3, Lu + Lf·cos q3)  q2 = <output id="v-q2"></output></div>
+  <p>q3 comes from the law of cosines on the shoulder, elbow, wrist triangle (in the robot: Lu, Lf and d). There are two solutions, positive and negative q3: elbow up or elbow down. A third choice is to turn the base by 180° and lean backwards. That makes four ways to bring the wrist to the same point.</p>
+  <p>If d is more than 435 mm the point is out of reach and the cosine leaves [−1, 1]: the firmware must reject the command before moving any motor.</p>
+</article>
+
+<article class="step" data-s="5" id="s5">
+  <h2><span class="n">5</span>Inverse, part two: orienting the hand</h2>
+  <p>With q1, q2 and q3 known, the forearm orientation before pronation, R03, is known too. What is missing to reach the desired orientation R is the wrist rotation:</p>
+  <div class="eq">R03 = Rz(q1)·Rx(−(q2+q3))
+W   = R03ᵀ · R  =  Rz(q4)·Rx(q5)·Rz(q6)     <span class="c">Z-X-Z Euler angles</span>
+
+q5 = atan2( ±√(W₀₂² + W₁₂²) , W₂₂ )      q5 = <output id="v-q5"></output>
+q4 = atan2( W₀₂ , −W₁₂ )                q4 = <output id="v-q4"></output>
+q6 = atan2( W₂₀ , W₂₁ )                 q6 = <output id="v-q6"></output></div>
+  <p>The sign in front of the square root gives two solutions: wrist up or down, with pronation and roll turned by 180°. Times the four of step 4, that makes eight solutions. In "Inverse" mode you see them all under the sliders; the ones outside the limits are struck through.</p>
+  <p>The endless roll simplifies one thing: q6 has no limits, so the firmware always picks the turn closest to the current angle. The hand never has to unwind.</p>
+</article>
+
+<article class="step" data-s="6" id="s6">
+  <h2><span class="n">6</span>Singularities: where the formulas jam</h2>
+  <p>In three situations two joints do the same thing and the robot loses a degree of freedom. Near these poses, small grip moves ask the joints for huge rotations. The three indicators at the top of the robot show how close you are.</p>
+  <ul>
+    <li><b>Straight wrist (q5 = 0).</b> Pronation and roll turn about the same axis: only q4 + q6 counts. The firmware keeps the pronation still and puts everything on the roll, which is endless and so does not mind.</li>
+    <li><b>Straight arm (q3 = 0).</b> The wrist is at the edge of the workspace (435 mm from the shoulder): it cannot go further, and elbow up and elbow down coincide.</li>
+    <li><b>Wrist above the base (r = 0).</b> The wrist centre is on the yaw axis: q1 can be anything. This is the most annoying one, to be avoided in trajectories.</li>
+  </ul>
+  <div class="btns">
+    <button class="btn" data-pose="30,40,60,0,0,0">Straight wrist</button>
+    <button class="btn" data-pose="0,40,0,0,35,0">Straight arm</button>
+    <button class="btn" data-pose="0,30,-56.47,0,40,0">Wrist above the base</button>
+    <button class="btn" data-pose="0,0,0,0,0,0">Rest pose</button>
+  </div>
+  <p>The rest pose, all zero, has all three at once. It is fine for parking, but trajectories should start by bending the elbow.</p>
+</article>
+
+<article class="step" data-s="7" id="s7">
+  <h2><span class="n">7</span>From joints to motors</h2>
+  <p>Base and shoulder have one motor each. Elbow and wrist are differentials: two motors drive two side bevels, and the satellite between them makes the second rotation. Turning together, they bend; turning in opposite directions, they spin.</p>
+  <div class="eq"><span class="c">elbow  (5:1 gearbox, belts 160/20: 40; bevels 30/15 → kp = 0.5)</span>
+A = 40 · (−q3 + q4/2)        B = 40 · (−q3 − q4/2)
+<span class="c">wrist  (belts 78/16 = 4.875; bevels 1:1)</span>
+A = 4.875 · (q5 + q6)           B = 4.875 · (q5 − q6)
+<span class="c">and back</span>
+q3 = −(A+B) / (2·40)    q4 = (A−B) / 40
+q5 =  (A+B) / (2·4.875)    q6 = (A−B) / (2·4.875)</div>
+  <div class="tw"><table>
+    <thead><tr><th>Motor</th><th>Ratio</th><th>Steps/degree</th><th>Rotor</th><th>Turns</th><th>Steps</th></tr></thead>
+    <tbody id="v-mot"></tbody>
+  </table></div>
+  <p class="note">Rotor = motor shaft angle in the same direction as the part it moves; steps with 200 × 16 microsteps per turn. The real direction of each motor is set once in the firmware (DIR pin) during homing. The sign of the base and of the cycloid depends on that direction.</p>
+  <p>The encoders read the joints directly, not the motors: AS5600 on the elbow shaft (q3), on the idler satellite (−q4), on the pitch axle (q5) and in the T fitting (q6). Closed-loop control therefore works on joint angles, without undoing the differential. For the roll, the angle within one turn is enough: with endless rotation any turn will do.</p>
+</article>
+
+<article class="step" data-s="8" id="s8">
+  <h2><span class="n">8</span>In the code</h2>
+  <p>Everything on this page is in <code>control/kinematics.py</code> (NumPy, no other dependency). Positions are in the shoulder frame: add 183 mm for the height above the desk.</p>
+  <div class="eq">from kinematics import fk, ik, hand_frame, joints_to_steps
+
+p = [252.8, 212.1, 40 - 183]       <span class="c"># grip 4 cm above the desk</span>
+R = hand_frame(p, tilt=0, spin=0)  <span class="c"># fingers pointing down</span>
+q = ik(p, R, q_prev=q_now)         <span class="c"># closest solution inside the limits</span>
+steps = joints_to_steps(q)         <span class="c"># 6 integers for the TMC2209s</span></div>
+  <p>Checks done on the model:</p>
+  <ul>
+    <li>The chain matches the matrices of the 3D arm viewer within 10⁻¹³ mm on 500 random poses.</li>
+    <li>On 3000 random poses inside the limits, all eight inverse solutions put the grip back where it was (error below 10⁻¹² mm).</li>
+    <li>Starting close to the original pose, the inverse finds the same branch, except within 3° of the straight arm, where the two branches coincide.</li>
+    <li>The "pick the apple" pose of the animation puts the grip 40 mm above the desk with the fingers vertical.</li>
+  </ul>
+  <p>Natural next step: a trajectory generator (joint-space and straight-line interpolation) that calls <code>ik</code> at every step and slows down near singularities.</p>
+</article>
+
+</div>
+</div>
+</div>
+
+<script>
+// ===== KINEMATICS (same as control/kinematics.py) =====
+const LU=205,LF=240,D6=215.8,SH=183;
+const RYAW=100/15*5,RSH=20,REL=5*160/20,KPEL=0.5,RWR=78/16,SPR=3200;
+const LIM=[[-170,170],[-30,90],[-60,105],[-180,180],[-90,90],[-Infinity,Infinity]];
+const d2r=Math.PI/180,r2d=180/Math.PI;
+const wrap=a=>((a+180)%360+360)%360-180;
+function Rx(d){const t=d*d2r,c=Math.cos(t),s=Math.sin(t);return [[1,0,0,0],[0,c,-s,0],[0,s,c,0],[0,0,0,1]];}
+function Rz(d){const t=d*d2r,c=Math.cos(t),s=Math.sin(t);return [[c,-s,0,0],[s,c,0,0],[0,0,1,0],[0,0,0,1]];}
+function Tz(L){return [[1,0,0,0],[0,1,0,0],[0,0,1,L],[0,0,0,1]];}
+function mm(A,B){const n=A.length,m=B[0].length,k=B.length,o=[];for(let i=0;i<n;i++){o.push([]);for(let j=0;j<m;j++){let s=0;for(let t=0;t<k;t++)s+=A[i][t]*B[t][j];o[i].push(s);}}return o;}
+const rot=T=>[0,1,2].map(i=>T[i].slice(0,3));
+const trn=A=>A[0].map((_,j)=>A.map(r=>r[j]));
+const col=(T,j)=>[T[0][j],T[1][j],T[2][j]];
+function fkFrames(q){const[q1,q2,q3,q4,q5,q6]=q;const sh=mm(Rz(q1),Rx(-q2));const el=mm(mm(sh,Tz(LU)),Rx(-q3));const fo=mm(el,Rz(q4));const wr=mm(fo,Tz(LF));const ha=mm(mm(wr,Rx(q5)),Rz(q6));const tcp=mm(ha,Tz(D6));return{sh,el,fo,wr,ha,tcp};}
+function handFrame(p,tilt,spin){const az=Math.atan2(-p[0],p[1]);const ur=[-Math.sin(az),Math.cos(az),0],t=[Math.cos(az),Math.sin(az),0];const T=tilt*d2r,s=spin*d2r;const z=[Math.sin(T)*ur[0],Math.sin(T)*ur[1],-Math.cos(T)];const zt=cross(z,t);const x=[0,1,2].map(i=>Math.cos(s)*t[i]+Math.sin(s)*zt[i]);const y=cross(z,x);return [[x[0],y[0],z[0]],[x[1],y[1],z[1]],[x[2],y[2],z[2]]];}
+function cross(a,b){return [a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];}
+function ikAll(p,R){const a=col(R,2);const pw=[p[0]-D6*a[0],p[1]-D6*a[1],p[2]-D6*a[2]];const[x,y,z]=pw,out=[],base=Math.atan2(-x,y)*r2d;
+  for(const flip of[1,-1]){const q1=flip>0?base:wrap(base+180);const r=flip*Math.hypot(x,y);let D=(r*r+z*z-LU*LU-LF*LF)/(2*LU*LF);if(Math.abs(D)>1+1e-9)continue;D=Math.max(-1,Math.min(1,D));
+    for(const elbow of[1,-1]){const q3=elbow*Math.acos(D)*r2d,t3=q3*d2r;const q2=wrap((Math.atan2(r,z)-Math.atan2(LF*Math.sin(t3),LU+LF*Math.cos(t3)))*r2d);
+      const W=mm(trn(rot(mm(Rz(q1),Rx(-(q2+q3))))),R);const s5=Math.hypot(W[0][2],W[1][2]);
+      for(const wf of[1,-1]){let q4,q6;const q5=Math.atan2(wf*s5,W[2][2])*r2d;
+        if(s5<1e-9){q4=0;q6=Math.atan2(W[1][0],W[0][0])*r2d;}else{q4=Math.atan2(wf*W[0][2],-wf*W[1][2])*r2d;q6=Math.atan2(wf*W[2][0],wf*W[2][1])*r2d;}
+        out.push({q:[q1,q2,q3,q4,q5,q6],flip,elbow,wf,W});}}}
+  return {sols:out,pw};}
+function inLim(q){return q.every((v,i)=>v>=LIM[i][0]-1e-6&&v<=LIM[i][1]+1e-6);}
+function settle(s,prev){const q=s.q.slice();if(Math.abs(q[4])<1e-6){const tot=q[3]+q[5];q[3]=prev[3];q[5]=tot-q[3];}q[5]=prev[5]+wrap(q[5]-prev[5]);return q;}
+function toMotors(q){const[q1,q2,q3,q4,q5,q6]=q;return[RYAW*q1,RSH*q2,REL*(-q3+KPEL*q4),REL*(-q3-KPEL*q4),RWR*(q5+q6),RWR*(q5-q6)];}
+// ===== END KINEMATICS =====
+
+const $=id=>document.getElementById(id);
+const S={mode:'fk',q:[-35,32,72,20,-48,30],t:{x:260,y:230,z:60,tilt:0,spin:0},branch:null,step:1,sols:[],sel:-1,pw:null,reach:true};
+const fmt=(v,d=1)=>(Math.abs(v)<5e-11?0:v).toFixed(d).replace('-','−');
+const vec=(v,d=1)=>'('+v.map(x=>fmt(x,d)).join(', ')+')';
+
+// ---- controls ----
+const FK=[['q1','Base',-170,170],['q2','Shoulder',-30,90],['q3','Elbow',-60,105],['q4','Pronation',-180,180],['q5','Wrist pitch',-90,90],['q6','Wrist roll',-360,360]];
+const IKC=[['x','x',-600,600,'mm'],['y','y',-600,600,'mm'],['z','z above desk',-40,650,'mm'],['tilt','Tilt',0,120,'°'],['spin','Gripper spin',-180,180,'°']];
+function slider(id,lab,min,max,val,step){return `<div class="sl"><label for="${id}">${lab}</label><input id="${id}" type="range" min="${min}" max="${max}" step="${step}" value="${val}"><output id="${id}-o"></output></div>`;}
+$('fk-ctl').innerHTML=FK.map((f,i)=>slider('fk'+i,`<b>${f[0]}</b>${f[1]}`,f[2],f[3],S.q[i],0.5)).join('');
+$('ik-ctl').innerHTML=IKC.map(f=>slider('ik-'+f[0],f[1],f[2],f[3],S.t[f[0]],1)).join('')+
+  `<div class="sols" id="sols" role="group" aria-label="Solutions"></div><p class="note" id="ik-note"></p>`;
+FK.forEach((f,i)=>$('fk'+i).addEventListener('input',e=>{S.q[i]=+e.target.value;update();}));
+IKC.forEach(f=>$('ik-'+f[0]).addEventListener('input',e=>{S.t[f[0]]=+e.target.value;solve();update();}));
+function setMode(m){S.mode=m;$('m-fk').setAttribute('aria-pressed',m==='fk');$('m-ik').setAttribute('aria-pressed',m==='ik');$('fk-ctl').hidden=m!=='fk';$('ik-ctl').hidden=m!=='ik';
+  if(m==='ik'){const F=fkFrames(S.q),p=col(F.tcp,3),a=col(F.tcp,2);S.t.x=Math.round(p[0]);S.t.y=Math.round(p[1]);S.t.z=Math.round(p[2]+SH);
+    const az=Math.atan2(-p[0],p[1]),ur=[-Math.sin(az),Math.cos(az),0];S.t.tilt=Math.round(Math.max(0,Math.min(120,Math.atan2(a[0]*ur[0]+a[1]*ur[1],-a[2])*r2d)));
+    const R=handFrame([S.t.x,S.t.y,S.t.z-SH],S.t.tilt,0),x0=col(R,0),y0=col(R,1),xa=col(F.tcp,0);S.t.spin=Math.round(Math.atan2(xa[0]*y0[0]+xa[1]*y0[1]+xa[2]*y0[2],xa[0]*x0[0]+xa[1]*x0[1]+xa[2]*x0[2])*r2d);
+    IKC.forEach(f=>$('ik-'+f[0]).value=S.t[f[0]]);S.branch=null;solve();}
+  update();}
+$('m-fk').onclick=()=>setMode('fk');$('m-ik').onclick=()=>setMode('ik');
+
+function elbowLabel(s){const[q1,q2,q3]=s.q;const e=[LU*Math.sin(q2*d2r),LU*Math.cos(q2*d2r)];const w=[LU*Math.sin(q2*d2r)+LF*Math.sin((q2+q3)*d2r),LU*Math.cos(q2*d2r)+LF*Math.cos((q2+q3)*d2r)];
+  const L2=w[0]*w[0]+w[1]*w[1]||1,t=(e[0]*w[0]+e[1]*w[1])/L2,oz=e[1]-t*w[1];return Math.abs(oz)<1e-6?'elbow straight':oz>0?'elbow up':'elbow down';}
+function solve(){const p=[S.t.x,S.t.y,S.t.z-SH],R=handFrame(p,S.t.tilt,S.t.spin);const res=ikAll(p,R);S.pw=res.pw;S.R=R;
+  S.sols=res.sols.map(s=>{const q=settle(s,S.q);return{...s,q,ok:inLim(q),lab:(s.flip>0?'front':'back')+' · '+elbowLabel({q})+' · wrist '+(q[4]>=0?'+':'−')};});
+  S.reach=S.sols.length>0;let best=-1,cost=Infinity;
+  S.sols.forEach((s,i)=>{if(!s.ok)return;if(S.branch&&(s.flip!==S.branch.flip||s.elbow!==S.branch.elbow||s.wf!==S.branch.wf))return;const c=s.q.reduce((a,v,j)=>a+(v-S.q[j])**2,0);if(c<cost){cost=c;best=i;}});
+  if(best<0&&S.branch){S.branch=null;return solve();}
+  S.sel=best;if(best>=0){S.q=S.sols[best].q.slice();FK.forEach((f,i)=>$('fk'+i).value=S.q[i]);}}
+document.querySelectorAll('[data-pose]').forEach(b=>b.onclick=()=>{S.q=b.dataset.pose.split(',').map(Number);FK.forEach((f,i)=>$('fk'+i).value=S.q[i]);setMode('fk');});
+
+// ---- step tracking ----
+const steps=[...document.querySelectorAll('.step')];
+function setStep(n){S.step=n;steps.forEach(s=>s.classList.toggle('on',+s.dataset.s===n));draw();}
+steps.forEach(s=>s.querySelector('h2').addEventListener('click',()=>setStep(+s.dataset.s)));
+const io=new IntersectionObserver(es=>{const vis=es.filter(e=>e.isIntersecting).sort((a,b)=>a.boundingClientRect.top-b.boundingClientRect.top);if(vis.length)setStep(+vis[0].target.dataset.s);},{rootMargin:'-30% 0px -55% 0px'});
+steps.forEach(s=>io.observe(s));
+
+// ---- live text ----
+function update(){
+  FK.forEach((f,i)=>$('fk'+i+'-o').textContent=fmt(S.q[i])+'°');
+  IKC.forEach(f=>$('ik-'+f[0]+'-o').textContent=fmt(S.t[f[0]],0)+(f[4]==='mm'?'':'°'));
+  const F=fkFrames(S.q),T=F.tcp;
+  $('v-T').textContent=T.slice(0,3).map((r,i)=>(i===0?'⎡':i===1?'⎢':'⎣')+r.map((v,j)=>(j<3?fmt(v,3):fmt(v,1)).padStart(j<3?7:8)).join(' ')+(i===0?' ⎤':i===1?' ⎥':' ⎦')).join('\n')+
+    `\n grip ${fmt(T[2][3]+SH,1)} mm above the desk, fingers pointing ${vec(col(T,2),2)}`;
+  const q=S.q,r=LU*Math.sin(q[1]*d2r)+LF*Math.sin((q[1]+q[2])*d2r),z=LU*Math.cos(q[1]*d2r)+LF*Math.cos((q[1]+q[2])*d2r);
+  $('v-r').textContent=fmt(r)+' mm';$('v-z').textContent=fmt(z)+' mm';$('v-pw').textContent=vec(col(F.wr,3));
+  // IK numbers: from the current target in IK mode, otherwise from the current FK pose (the round trip)
+  const p=S.mode==='ik'?[S.t.x,S.t.y,S.t.z-SH]:col(T,3),R=S.mode==='ik'?S.R:rot(T),a=col(R,2),pw=[0,1,2].map(i=>p[i]-D6*a[i]);
+  const d=Math.hypot(pw[0],pw[1],pw[2]);$('v-pw2').textContent=vec(pw);$('v-d').textContent=fmt(d);
+  $('v-q1').textContent=fmt(Math.atan2(-pw[0],pw[1])*r2d)+'°';
+  const sel=S.mode==='ik'?(S.sel>=0?S.sols[S.sel]:null):{q:S.q};
+  ['q2','q3','q4','q5','q6'].forEach((k,i)=>$('v-'+k).textContent=sel?fmt(sel.q[i+1])+'°':'—');
+  if(d>LU+LF+1e-6)$('v-q3').textContent='out of reach';
+  // motors
+  const m=toMotors(S.q),names=[['Base','5 · 100/15 = 33.33','--base'],['Shoulder','planetary 1:20','--l-up'],['Elbow A','40 · diff.','--l-fo'],['Elbow B','40 · diff.','--l-fo'],['Wrist A','4.875 · diff.','--l-ha'],['Wrist B','4.875 · diff.','--l-ha']];
+  const rat=[RYAW,RSH,REL,REL,RWR,RWR];
+  $('v-mot').innerHTML=m.map((v,i)=>`<tr><td><span class="dot" style="background:var(${names[i][2]})"></span>${names[i][0]}</td><td>${names[i][1]}</td><td class="num">${fmt(rat[i]*SPR/360,2)}</td><td class="num">${fmt(v,1)}°</td><td class="num">${fmt(v/360,2)}</td><td class="num">${fmt(Math.round(v*SPR/360),0)}</td></tr>`).join('');
+  // solutions
+  if(S.mode==='ik'){$('sols').innerHTML=S.sols.map((s,i)=>`<button class="sol" data-i="${i}" ${s.ok?'':'disabled'} aria-pressed="${i===S.sel}">${s.lab}<br>${s.q.slice(0,6).map(v=>fmt(v,0)).join(' ')}</button>`).join('');
+    $('sols').querySelectorAll('.sol').forEach(b=>b.onclick=()=>{const s=S.sols[+b.dataset.i];S.branch={flip:s.flip,elbow:s.elbow,wf:s.wf};solve();update();});
+    const nok=S.sols.filter(s=>s.ok).length;
+    $('ik-note').textContent=!S.reach?`Out of reach: the wrist would have to be ${fmt(d,0)} mm from the shoulder, the maximum is 435.`:
+      `${S.sols.length} solutions, ${nok} inside the limits. `+(S.branch?'Branch picked by hand: tap another box to change it.':'Automatic choice: the closest to the current pose.');}
+  draw();}
+
+// ---- 3D canvas ----
+const cv=$('cv'),ctx=cv.getContext('2d'),stage=$('stage');
+const cam={az:-128,el:20,zoom:1};let W=0,H=0,DPR=1,C={};
+function readColors(){const cs=getComputedStyle(document.documentElement);['paper','panel','ink','muted','rule','accent','ok','warn','bad','ax-x','ax-y','ax-z','l-up','l-fo','l-ha','base','grid'].forEach(k=>C[k]=cs.getPropertyValue('--'+k).trim());}
+function resize(){const r=stage.getBoundingClientRect();DPR=window.devicePixelRatio||1;W=r.width;H=r.height;cv.width=W*DPR;cv.height=H*DPR;draw();}
+new ResizeObserver(resize).observe(stage);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{readColors();draw();});
+new MutationObserver(()=>{readColors();draw();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+function P(p){const a=cam.az*d2r,e=cam.el*d2r,x=p[0],y=p[1],z=p[2]-300;
+  const xr=x*Math.cos(a)+y*Math.sin(a),yr=-x*Math.sin(a)+y*Math.cos(a);
+  const v=z*Math.cos(e)+yr*Math.sin(e),dep=yr*Math.cos(e)-z*Math.sin(e);
+  const k=Math.min(W,H*1.15)/1150*cam.zoom,s=2200/(2200+dep);
+  return[W/2+xr*k*s,H*0.56-v*k*s,dep];}
+const add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],sc=(a,s)=>[a[0]*s,a[1]*s,a[2]*s];
+const D=p=>[p[0],p[1],p[2]+SH]; // shoulder frame -> desk frame
+let prims=[];
+function seg(a,b,w,c,o={}){const A=P(a),B=P(b);prims.push({k:'s',A,B,w,c,d:(A[2]+B[2])/2,...o});}
+function dot(p,r,c,o={}){const A=P(p);prims.push({k:'d',A,r,c,d:A[2]-(o.front?1e4:0),...o});}
+function txt(p,t,c,o={}){const A=P(p);prims.push({k:'t',A,t,c,d:-1e5,...o});}
+function circ(cn,n,r,c,w,o={}){const u=Math.abs(n[2])<.9?cross(n,[0,0,1]):cross(n,[1,0,0]);const L=Math.hypot(...u);const uu=sc(u,1/L),vv=cross(n,uu);const pts=[];for(let i=0;i<=40;i++){const t=i/40*2*Math.PI;pts.push(P(add(cn,add(sc(uu,r*Math.cos(t)),sc(vv,r*Math.sin(t))))));}
+  prims.push({k:'c',pts,c,w,d:P(cn)[2]+(o.dz||0),...o});}
+function triad(F,len,lab){const o=D(col(F,3));['ax-x','ax-y','ax-z'].forEach((c,j)=>seg(o,add(o,sc(col(F,j),len)),2.2,C[c],{top:true}));if(lab)txt(add(o,sc(col(F,2),-14)),lab,C.muted,{size:11});}
+function axisLine(F,j,len,lab,c){const o=D(col(F,3)),a=col(F,j);seg(add(o,sc(a,-len)),add(o,sc(a,len)),1.5,c,{dash:[5,4],top:true});if(lab)txt(add(o,sc(a,len+14)),lab,c,{size:12,bold:true});}
+function draw(){if(!W)return;if(!C.ink)readColors();ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);prims=[];
+  const F=fkFrames(S.q),st=S.step;
+  // desk grid
+  for(let i=-6;i<=6;i++){seg([i*100,-600,0],[i*100,600,0],1,C.grid,{under:true});seg([-600,i*100,0],[600,i*100,0],1,C.grid,{under:true});}
+  // reach circle (wrist centre max) on the desk plane for step 4
+  // base
+  circ([0,0,0],[0,0,1],78,C.base,2,{under:true});circ([0,0,118],[0,0,1],70,C.base,2);
+  for(let i=0;i<8;i++){const t=i/8*2*Math.PI;seg([78*Math.cos(t),78*Math.sin(t),0],[70*Math.cos(t),70*Math.sin(t),118],1.2,C.base);}
+  const sh=D(col(F.sh,3)),el=D(col(F.el,3)),wr=D(col(F.wr,3)),ha=D(col(F.ha,3)),tcp=D(col(F.tcp,3));
+  const xs=col(F.sh,0);seg([0,0,118],sh,10,C.base);seg(add(sh,sc(xs,-48)),add(sh,sc(xs,48)),14,C.base);
+  // links
+  seg(sh,el,15,C['l-up']);seg(add(el,sc(xs,-42)),add(el,sc(xs,42)),11,C['l-up']);
+  seg(el,wr,12,C['l-fo']);const xw=col(F.wr,0);seg(add(wr,sc(xw,-36)),add(wr,sc(xw,36)),9,C['l-fo']);
+  const zh=col(F.ha,2),xh=col(F.ha,0),yh=col(F.ha,1);
+  seg(wr,add(wr,sc(zh,105)),10,C['l-ha']);circ(add(wr,sc(zh,105)),zh,24,C['l-ha'],3);
+  for(let k=0;k<3;k++){const t=(90+120*k)*d2r,rd=add(sc(xh,Math.cos(t)),sc(yh,Math.sin(t)));const b=add(add(wr,sc(zh,108)),sc(rd,20)),m=add(add(wr,sc(zh,150)),sc(rd,15)),tp=add(add(wr,sc(zh,192)),sc(rd,7));seg(b,m,5,C['l-ha']);seg(m,tp,4,C['l-ha']);}
+  [sh,el,wr].forEach(p=>dot(p,4.5,C.panel,{ring:C.ink}));dot(tcp,3,C.ink);
+  // step overlays
+  if(st===1){seg([0,0,-10],[0,0,640],1.5,C.accent,{dash:[5,4],top:true});txt([0,0,660],'q1',C.accent,{size:12,bold:true});
+    axisLine(F.sh,0,90,'q2',C.accent);axisLine(F.el,0,80,'q3',C.accent);axisLine(F.fo,2,LF+30,null,C.accent);txt(D(col(mm(F.fo,Tz(LF*0.55)),3)),'q4',C.accent,{size:12,bold:true,dx:14});
+    axisLine(F.wr,0,70,'q5',C.accent);seg(wr,add(wr,sc(zh,240)),1.5,C.accent,{dash:[5,4],top:true});txt(add(wr,sc(zh,256)),'q6',C.accent,{size:12,bold:true});}
+  if(st===2||st===8){triad(F.sh,55,'shoulder');triad(F.el,50,'elbow');triad(F.wr,45,'wrist');triad(F.tcp,40,'grip');}
+  if(st===3){circ(wr,col(F.wr,1),20,C.accent,2.5,{top:true});circ(wr,col(F.wr,2),20,C.accent,2.5,{top:true});
+    axisLine(F.fo,2,0,null,C.accent);seg(add(wr,sc(col(F.wr,2),-90)),add(wr,sc(col(F.wr,2),60)),1.5,C.accent,{dash:[5,4],top:true});
+    seg(add(wr,sc(xw,-80)),add(wr,sc(xw,80)),1.5,C.accent,{dash:[5,4],top:true});seg(wr,add(wr,sc(zh,230)),1.5,C.accent,{dash:[5,4],top:true});
+    txt(add(wr,[0,0,40]),'wrist centre',C.accent,{size:12,bold:true});dot(wr,5,C.accent,{front:true});}
+  if(st===4){const pw=wr;seg(sh,pw,1.8,C.accent,{dash:[6,4],top:true});seg([pw[0],pw[1],0],pw,1.2,C.muted,{dash:[3,4],top:true});seg([0,0,0],[pw[0],pw[1],0],1.5,C.accent,{dash:[3,4],top:true});
+    txt(add(sc(add(sh,el),.5),[0,0,0]),'Lu',C.accent,{size:13,bold:true,dx:-18});txt(sc(add(el,wr),.5),'Lf',C.accent,{size:13,bold:true,dx:14});txt(sc(add(sh,pw),.5),'d',C.accent,{size:13,bold:true,dx:10});
+    txt([pw[0]/2,pw[1]/2,0],'r',C.accent,{size:13,bold:true,dy:14});seg(tcp,wr,2,C.accent,{top:true});txt(sc(add(tcp,wr),.5),'d6',C.accent,{size:12,bold:true,dx:16});
+    circ([0,0,SH],[0,0,1],LU+LF,C.accent,1,{dash:[2,5],under:true});dot(wr,5,C.accent,{front:true});}
+  if(st===5){const R03=mm(mm(Rz(S.q[0]),Rx(-(S.q[1]+S.q[2]))),Tz(LU+LF));R03[2][3]=col(F.wr,3)[2];R03[0][3]=col(F.wr,3)[0];R03[1][3]=col(F.wr,3)[1];
+    triad(R03,70,'R03');triad(F.tcp,55,'R');}
+  if(st===6){seg([0,0,-10],[0,0,640],1.5,C.accent,{dash:[5,4],top:true});seg(sh,wr,1.5,C.accent,{dash:[6,4],top:true});
+    axisLine(F.fo,2,0,null,C.accent);seg(add(wr,sc(col(F.wr,2),-80)),add(wr,sc(col(F.wr,2),80)),2,C.accent,{dash:[5,4],top:true});seg(wr,add(wr,sc(zh,240)),2,C.accent,{dash:[5,4],top:true});}
+  if(st===7){const ea=[[add(el,sc(xs,46)),'A'],[add(el,sc(xs,-46)),'B']],wa=[[add(wr,sc(xw,40)),'A'],[add(wr,sc(xw,-40)),'B']];
+    ea.forEach(([p,l])=>{circ(p,xs,24,C['l-fo'],3,{top:true});txt(add(p,sc(xs,l==='A'?30:-30)),'elbow '+l,C['l-fo'],{size:11,bold:true});});
+    wa.forEach(([p,l])=>{circ(p,xw,19,C['l-ha'],3,{top:true});txt(add(p,sc(xw,l==='A'?28:-28)),'wrist '+l,C['l-ha'],{size:11,bold:true});});}
+  if(S.mode==='ik'){const t=[S.t.x,S.t.y,S.t.z];const s=14;seg(add(t,[-s,0,0]),add(t,[s,0,0]),2,C.accent,{top:true});seg(add(t,[0,-s,0]),add(t,[0,s,0]),2,C.accent,{top:true});seg(add(t,[0,0,-s]),add(t,[0,0,s]),2,C.accent,{top:true});
+    if(!S.reach)txt(add(t,[0,0,30]),'out of reach',C.bad,{size:12,bold:true});}
+  // paint
+  const under=prims.filter(p=>p.under),top=prims.filter(p=>p.top||p.k==='t'),mid=prims.filter(p=>!p.under&&!p.top&&p.k!=='t').sort((a,b)=>b.d-a.d);
+  [...under,...mid,...top].forEach(p=>{ctx.setLineDash(p.dash||[]);ctx.lineCap='round';
+    if(p.k==='s'){ctx.strokeStyle=p.c;ctx.lineWidth=p.w;ctx.beginPath();ctx.moveTo(p.A[0],p.A[1]);ctx.lineTo(p.B[0],p.B[1]);ctx.stroke();
+      if(p.w>=8&&!p.dash){ctx.strokeStyle='rgba(255,255,255,.18)';ctx.lineWidth=p.w*.3;ctx.beginPath();ctx.moveTo(p.A[0],p.A[1]-p.w*.18);ctx.lineTo(p.B[0],p.B[1]-p.w*.18);ctx.stroke();}}
+    else if(p.k==='d'){ctx.setLineDash([]);ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.A[0],p.A[1],p.r,0,7);ctx.fill();if(p.ring){ctx.strokeStyle=p.ring;ctx.lineWidth=1.6;ctx.stroke();}}
+    else if(p.k==='c'){ctx.strokeStyle=p.c;ctx.lineWidth=p.w;ctx.beginPath();p.pts.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.stroke();}
+    else if(p.k==='t'){ctx.setLineDash([]);ctx.font=`${p.bold?600:500} ${p.size||12}px "IBM Plex Mono",monospace`;ctx.fillStyle=p.c;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.lineWidth=3;ctx.strokeStyle=C.panel;ctx.strokeText(p.t,p.A[0]+(p.dx||0),p.A[1]+(p.dy||0));ctx.fillText(p.t,p.A[0]+(p.dx||0),p.A[1]+(p.dy||0));}});
+  ctx.setLineDash([]);
+  hud(F);}
+function hud(F){const q=S.q,pw=col(F.wr,3),rw=Math.hypot(pw[0],pw[1]),z=D(col(F.tcp,3))[2],zlow=Math.min(D(col(F.el,3))[2],D(col(F.wr,3))[2],z);
+  const lvl=(v,a,b)=>v<a?'bad':v<b?'warn':'ok';
+  const c=[[`wrist ${fmt(Math.abs(q[4]),0)}°`,lvl(Math.abs(q[4]),1,8)],[`elbow ${fmt(Math.abs(q[2]),0)}°`,lvl(Math.abs(q[2]),1,8)],[`wrist r ${fmt(rw,0)} mm`,lvl(rw,5,40)]];
+  let h=c.map(([t,l])=>`<span class="chip ${l}" title="distance from the singularity">${t}</span>`).join('');
+  h+=`<span class="chip">grip ${fmt(z,0)} mm above the desk</span>`;if(zlow<0)h+=`<span class="chip bad">below the desk</span>`;
+  $('hud').innerHTML=h;}
+// orbit
+let drag=null;const pts=new Map();
+stage.addEventListener('pointerdown',e=>{stage.setPointerCapture(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);drag={x:e.clientX,y:e.clientY,d:null};});
+stage.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;pts.set(e.pointerId,[e.clientX,e.clientY]);
+  if(pts.size===2){const[a,b]=[...pts.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(drag.d)cam.zoom=Math.max(.5,Math.min(3,cam.zoom*d/drag.d));drag.d=d;draw();return;}
+  cam.az-= (e.clientX-drag.x)*.4;cam.el=Math.max(-5,Math.min(85,cam.el+(e.clientY-drag.y)*.3));drag.x=e.clientX;drag.y=e.clientY;draw();});
+const up=e=>{pts.delete(e.pointerId);if(!pts.size)drag=null;else if(drag)drag.d=null;};
+stage.addEventListener('pointerup',up);stage.addEventListener('pointercancel',up);
+stage.addEventListener('wheel',e=>{e.preventDefault();cam.zoom=Math.max(.5,Math.min(3,cam.zoom*Math.exp(-e.deltaY*.0012)));draw();},{passive:false});
+readColors();setStep(1);update();
+document.fonts&&document.fonts.ready.then(draw);
+</script>
+
+</body></html>

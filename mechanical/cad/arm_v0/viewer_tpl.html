@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>IDRA Robot Arm</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: a machine console. Wordmark bar, one wide stage with the robot, a keyboard deck directly under it, then the service panels in two columns. One dark look by design. */
+:root{--bg:#0d0e10;--panel:#16181b;--raise:#1e2125;--line:#2c3036;--fg:#e7e3d9;--mut:#8f9297;--brass:#c39a4a;--ember:#e0492e;--stage:#6c6f71;
+  --f-disp:"Saira Condensed","Arial Narrow",sans-serif;--f-body:"IBM Plex Sans",system-ui,sans-serif;--f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 var(--f-body)}
+main{max-width:1180px;margin:0 auto;padding-block:14px 28px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:12px}
+a{color:var(--brass)}
+.bar{display:flex;align-items:baseline;gap:8px 18px;flex-wrap:wrap}
+.bar h1{font:800 44px/0.9 var(--f-disp);letter-spacing:.04em;margin:0;text-transform:uppercase}
+.bar h1 b{color:var(--brass);font-weight:800}
+.bar .sub{font:500 15px/1.2 var(--f-disp);letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+.bar .ver{margin-left:auto;font:500 11px/1.4 var(--f-mono);color:var(--mut);text-align:right}
+.sitenav{display:flex;flex-wrap:wrap;gap:6px 18px;font:500 14px/1.2 var(--f-disp);letter-spacing:.12em;text-transform:uppercase}
+.sitenav a{color:var(--mut);text-decoration:none}.sitenav a[aria-current],.sitenav a:hover{color:var(--brass)}
+#stage{position:relative;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:var(--stage)}
+#stage::after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 140px rgba(0,0,0,.55)}
+canvas{display:block;width:100%;height:min(66vh,620px);touch-action:none;cursor:grab}
+.hint{position:absolute;left:12px;bottom:10px;right:12px;font:12px var(--f-mono);color:#0d0e10;opacity:.75;pointer-events:none;z-index:1}
+.cap{position:absolute;left:12px;right:12px;top:10px;font:600 14px var(--f-body);color:var(--fg);background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--brass);border-radius:3px;padding:8px 12px;opacity:0;transition:opacity .4s;pointer-events:none;z-index:2}
+.cap.on{opacity:.96}
+.hud{position:absolute;left:10px;top:10px;font:12px/1.5 var(--f-mono);background:rgba(13,14,16,.86);border:1px solid var(--line);border-radius:3px;padding:7px 10px;pointer-events:none;font-variant-numeric:tabular-nums;max-width:calc(100% - 20px);z-index:1}
+.hud .ok{color:var(--brass);font-weight:600}.hud .bad{color:var(--ember);font-weight:600}
+.pad{position:absolute;right:10px;bottom:10px;display:grid;grid-template-columns:repeat(4,42px);gap:5px;z-index:1}
+.pad button{width:42px;height:42px;padding:0;font-size:17px;line-height:1;touch-action:none;user-select:none;-webkit-user-select:none;background:rgba(13,14,16,.86)}
+.pad button.t{font-size:11px}
+.pad button:active{background:var(--brass);color:#0d0e10}
+@media (hover:hover) and (pointer:fine){.pad{display:none}}
+button,select{font:500 13px var(--f-body);color:var(--fg);background:var(--raise);border:1px solid var(--line);border-radius:3px;padding:6px 12px}
+button{cursor:pointer}
+button:hover{border-color:var(--mut)}
+button.on{background:var(--brass);border-color:var(--brass);color:#0d0e10;font-weight:600}
+button.play{background:transparent;border-color:var(--brass);color:var(--brass);font-weight:600}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+/* keyboard deck */
+.deck{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.deck-top{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap}
+.led{width:9px;height:9px;border-radius:50%;background:#3a2622;flex:none}
+.deck.live .led{background:var(--ember);box-shadow:0 0 10px var(--ember)}
+.deck-top .st{font:700 17px/1 var(--f-disp);letter-spacing:.14em;text-transform:uppercase}
+.deck-top .grow{flex:1}
+.kb{display:flex;gap:14px 26px;flex-wrap:wrap;align-items:flex-end}
+.kgrp{display:flex;flex-direction:column;gap:6px;min-width:0}
+.kgrp>span{font:500 12px/1 var(--f-disp);letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+.krow{display:flex;gap:6px}
+.kc{width:58px;height:52px;padding:5px 4px 4px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;background:linear-gradient(#24272c,#1a1c20);border:1px solid var(--line);border-bottom:3px solid #08090a;border-radius:5px;touch-action:none;user-select:none;-webkit-user-select:none}
+.kc b{font:600 15px/1 var(--f-mono);color:var(--fg)}
+.kc i{font:normal 500 10px/1.1 var(--f-body);color:var(--mut);text-align:center;white-space:nowrap}
+.kc.wide{width:84px}
+.kc.gap{visibility:hidden}
+.kc.dn,.kc:active{background:var(--brass);border-color:var(--brass);border-bottom-width:1px;transform:translateY(2px)}
+.kc.dn b,.kc.dn i,.kc:active b,.kc:active i{color:#0d0e10}
+.keys{color:var(--mut);font-size:13px}
+.keys kbd,kbd{font:500 11px var(--f-mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;padding:0 5px;background:var(--raise);color:var(--fg)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:12px;align-items:start}
+.panel{padding:14px;border:1px solid var(--line);border-radius:4px;background:var(--panel);min-width:0}
+.panel h2{font:700 15px/1 var(--f-disp);letter-spacing:.16em;text-transform:uppercase;color:var(--brass);margin:0 0 10px}
+.row{display:flex;align-items:center;gap:8px 10px;margin:6px 0;flex-wrap:wrap}
+.row label.l{min-width:128px;color:var(--mut)}
+input[type=range]{flex:1;min-width:120px;accent-color:var(--brass)}
+input[type=checkbox]{accent-color:var(--brass)}
+.val{min-width:48px;text-align:right;font:12px var(--f-mono);font-variant-numeric:tabular-nums}
+.chips label,.wsrow label.w{display:flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--line);border-radius:3px;background:var(--raise);font-size:13px}
+.mot{color:var(--mut);font:12px/1.6 var(--f-mono)}
+/* site sections (only on the GitHub Pages build) */
+.lede{font:500 clamp(20px,2.6vw,28px)/1.25 var(--f-disp);letter-spacing:.02em;max-width:34ch;margin:0;text-wrap:balance}
+.feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:12px}
+.feat article{border-top:2px solid var(--brass);padding-top:10px;min-width:0}
+.feat h3{font:700 19px/1.1 var(--f-disp);letter-spacing:.08em;text-transform:uppercase;margin:0 0 6px}
+.feat p{margin:0;color:var(--mut);max-width:60ch}
+table.spec{border-collapse:collapse;width:100%;font-size:13px}
+table.spec td{padding:6px 0;border-bottom:1px solid var(--line);vertical-align:top}
+table.spec td:first-child{color:var(--mut);padding-right:14px;white-space:nowrap}
+table.spec td:last-child{font-family:var(--f-mono);font-size:12px}
+.foot{color:var(--mut);font-size:12px;border-top:1px solid var(--line);padding-top:12px}
+@media (max-width:560px){.bar h1{font-size:34px}.kc{width:46px;height:46px}.kc.wide{width:64px}.kc i{font-size:9px}.bar .ver{margin-left:0;text-align:left}}
+@media (prefers-reduced-motion:reduce){.kc{transition:none}.cap{transition:none}}
+</style></head><body><main>
+<header class="bar"><h1>ID<b>R</b>A</h1><span class="sub">Infinite Differential Roll Arm</span><span class="ver">arm v0.31 · wrist v1.26 · hand v2.4<br>design model, not built yet</span></header>
+<!--SITE_NAV-->
+<!--SITE_HERO-->
+<div id="stage"><canvas id="cv"></canvas><div class="cap" id="cap"></div><div class="hint" id="hint">Drag to orbit · scroll or pinch to zoom · Shift or right button to pan</div>
+<div class="hud" id="hud" hidden></div>
+<div class="pad" id="pad" hidden aria-label="Touch controls">
+<button data-a="tm" title="Tilt towards the robot (A)">∠−</button><button data-a="f" title="Forward (↑)">↑</button><button data-a="tp" title="Tilt outwards (D)">∠+</button><button data-a="u" title="Up (W)">⤒</button>
+<button data-a="l" title="Left (←)">←</button><button data-a="b" title="Back (↓)">↓</button><button data-a="r" title="Right (→)">→</button><button data-a="d" title="Down (S)">⤓</button>
+<button data-a="rm" title="Spin the hand (Q)">⟲</button><button data-a="rp" title="Spin the hand (E)">⟳</button><button class="t" data-a="gc" title="Close (Z)">close</button><button class="t" data-a="go" title="Open (X)">open</button>
+</div></div>
+<section class="deck" id="deck" aria-label="Keyboard control">
+<div class="deck-top"><span class="led" aria-hidden="true"></span><span class="st" id="dst">Standby</span><button id="cart" aria-pressed="false">Take control (C)</button><button id="ready" hidden>Ready pose (P)</button><button id="vert" hidden>Fingers vertical</button><span class="grow"></span><button class="play" id="play">▶ Showcase</button></div>
+<div class="kb" id="kb">
+ <div class="kgrp"><span>Wrist · height</span>
+  <div class="krow"><button class="kc" data-code="KeyQ" data-a="rm"><b>Q</b><i>roll −</i></button><button class="kc" data-code="KeyW" data-a="u"><b>W</b><i data-l="u">up</i></button><button class="kc" data-code="KeyE" data-a="rp"><b>E</b><i>roll +</i></button><button class="kc" data-code="KeyR" data-a="pp"><b>R</b><i>pron +</i></button></div>
+  <div class="krow"><button class="kc" data-code="KeyA" data-a="tm"><b>A</b><i>tilt −</i></button><button class="kc" data-code="KeyS" data-a="d"><b>S</b><i data-l="d">down</i></button><button class="kc" data-code="KeyD" data-a="tp"><b>D</b><i>tilt +</i></button><button class="kc" data-code="KeyF" data-a="pm"><b>F</b><i>pron −</i></button></div></div>
+ <div class="kgrp"><span>Grip</span>
+  <div class="krow"><button class="kc" data-code="KeyZ" data-a="gc"><b>Z</b><i>close</i></button><button class="kc" data-code="KeyX" data-a="go"><b>X</b><i>open</i></button></div></div>
+ <div class="kgrp"><span>Move the grip</span>
+  <div class="krow"><span class="kc gap"></span><button class="kc" data-code="ArrowUp" data-a="f"><b>↑</b><i data-l="f">reach</i></button><span class="kc gap"></span></div>
+  <div class="krow"><button class="kc" data-code="ArrowLeft" data-a="l"><b>←</b><i data-l="l">orbit</i></button><button class="kc" data-code="ArrowDown" data-a="b"><b>↓</b><i data-l="b">pull in</i></button><button class="kc" data-code="ArrowRight" data-a="r"><b>→</b><i data-l="r">orbit</i></button></div></div>
+ <div class="kgrp"><span>System</span>
+  <div class="krow"><button class="kc" data-code="KeyM" data-sys="1"><b>M</b><i>mode</i></button><button class="kc" data-code="KeyO" data-sys="1"><b>O</b><i>hand lock</i></button><button class="kc" data-code="KeyP" data-sys="1"><b>P</b><i>ready</i></button></div>
+  <div class="krow"><button class="kc wide" data-code="ShiftLeft" data-shift="1"><b>Shift</b><i>3× speed</i></button><button class="kc wide" data-code="Escape" data-sys="1"><b>Esc</b><i>release</i></button></div></div>
+</div>
+<div class="row" id="modes" hidden><span class="mot">Mode</span><button data-m="cyl" class="on" aria-pressed="true">Cylindrical</button><button data-m="view" aria-pressed="false">View</button><button data-m="hand" aria-pressed="false">Hand</button><button data-m="joints" aria-pressed="false">Joints</button><button id="orient" aria-pressed="false">Hand: follows the arm (O)</button></div>
+<div class="keys" id="keys" hidden><span id="leg"></span>. If the keys do nothing, click the page once.</div>
+</section>
+<div class="cols">
+<section class="panel"><h2>Joints</h2>
+<div class="row"><label class="l" for="yaw">Base (yaw)</label><input id="yaw" type="range" min="-170" max="170" value="0" step="1"><span class="val" id="yv">0°</span></div>
+<div class="row"><label class="l" for="pitch">Shoulder</label><input id="pitch" type="range" min="-30" max="90" value="0" step="1"><span class="val" id="pv">0°</span></div>
+<div class="row"><label class="l" for="roll">Elbow (flexion)</label><input id="roll" type="range" min="-60" max="105" value="0" step="1"><span class="val" id="rv">0°</span></div>
+<div class="row"><label class="l" for="pron">Forearm pronation</label><input id="pron" type="range" min="-180" max="180" value="0" step="1"><span class="val" id="nv">0°</span></div>
+<div class="row"><label class="l" for="wp">Wrist pitch</label><input id="wp" type="range" min="-90" max="90" value="0" step="1"><span class="val" id="wpv">0°</span></div>
+<div class="row"><label class="l" for="wr">Wrist roll (endless)</label><input id="wr" type="range" min="-360" max="360" value="0" step="1"><span class="val" id="wrv">0°</span></div>
+<div class="row"><label class="l" for="grip">Finger opening</label><input id="grip" type="range" min="11" max="80" value="46" step="1"><span class="val" id="gv">+26°</span></div>
+<div class="mot" id="mot"></div>
+</section>
+<section class="panel"><h2>View</h2>
+<div class="row"><button data-v="iso">Isometric</button><button data-v="front">Front</button><button data-v="side">Side</button><button data-v="top">Top</button><button data-v="reset">Reset</button></div>
+<div class="row wsrow"><label class="w"><input type="checkbox" id="ws"> Reachable space</label><select id="wsm" aria-label="Cloud type"><option value="0">all poses, 3D</option><option value="1">top grasp, 3D</option><option value="2">section on the arm plane</option></select></div>
+<div class="mot" id="wsinfo"></div>
+<h2 style="margin-top:14px">Layers</h2>
+<div class="row chips" id="chips"></div>
+</section>
+</div>
+<!--SITE_SECTIONS-->
+</main>
+<script>
+(function(){
+const D=__DATA__;
+const $=id=>document.getElementById(id);
+const cv=$("cv"),gl=cv.getContext("webgl",{antialias:true});
+if(!gl){cv.insertAdjacentHTML("afterend","<p style=\"padding:12px\">WebGL is not available on this device.</p>");return;}
+function dec(s){const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u.buffer;}
+function sh(t,src){const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);return s;}
+const pr=gl.createProgram();
+gl.attachShader(pr,sh(gl.VERTEX_SHADER,"attribute vec3 a;attribute vec3 nn;uniform mat4 uP,uV,uM;varying vec3 vN,vP;void main(){vec4 p=uV*uM*vec4(a,1.);gl_Position=uP*p;vP=p.xyz;vN=(uV*uM*vec4(nn,0.)).xyz;}"));
+gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,"precision mediump float;varying vec3 vN,vP;uniform vec3 uC;uniform float uS;void main(){vec3 N=normalize(vN);if(N.z<0.)N=-N;vec3 L=normalize(vec3(.35,.5,.8));float l=.30+.70*abs(dot(N,L));vec3 H=normalize(L+normalize(-vP));float sp=pow(max(dot(N,H),0.),28.)*(.10+.55*uS);float rim=pow(1.-max(dot(N,normalize(-vP)),0.),3.)*.10;gl_FragColor=vec4(uC*l+vec3(sp+rim),1.);}"));
+gl.linkProgram(pr);gl.useProgram(pr);
+const loc={a:gl.getAttribLocation(pr,"a"),n:gl.getAttribLocation(pr,"nn"),P:gl.getUniformLocation(pr,"uP"),V:gl.getUniformLocation(pr,"uV"),M:gl.getUniformLocation(pr,"uM"),C:gl.getUniformLocation(pr,"uC"),S:gl.getUniformLocation(pr,"uS")};
+gl.enableVertexAttribArray(loc.a);gl.enableVertexAttribArray(loc.n);gl.enable(gl.DEPTH_TEST);
+const parts=D.map(d=>{
+const pos=new Float32Array(dec(d.p)),idx=new Uint32Array(dec(d.i)),n=idx.length,out=new Float32Array(n*6);
+for(let t=0;t<n;t+=3){
+const a=idx[t]*3,b=idx[t+1]*3,c=idx[t+2]*3;
+const ux=pos[b]-pos[a],uy=pos[b+1]-pos[a+1],uz=pos[b+2]-pos[a+2],vx=pos[c]-pos[a],vy=pos[c+1]-pos[a+1],vz=pos[c+2]-pos[a+2];
+let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;const L=Math.hypot(nx,ny,nz)||1;nx/=L;ny/=L;nz/=L;
+[a,b,c].forEach((o,k)=>{const q=(t+k)*6;out[q]=pos[o];out[q+1]=pos[o+1];out[q+2]=pos[o+2];out[q+3]=nx;out[q+4]=ny;out[q+5]=nz;});
+}
+const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,out,gl.STATIC_DRAW);
+return {g:d.g,k:d.k,c:d.c,m:d.m,pv:d.pv,ax:d.ax,sg:d.sg,buf:buf,cnt:n};
+});
+const I=()=>new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);
+function mul(a,b){const o=new Float32Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+r]*b[c*4+k];o[c*4+r]=s;}return o;}
+function rx(d){const t=d*Math.PI/180,c=Math.cos(t),s=Math.sin(t),m=I();m[5]=c;m[6]=s;m[9]=-s;m[10]=c;return m;}
+function tr(p){const m=I();m[12]=p[0];m[13]=p[1];m[14]=p[2];return m;}
+function rax(u,d){const t=d*Math.PI/180,c=Math.cos(t),s=Math.sin(t),x=u[0],y=u[1],z=u[2],k=1-c,m=I();m[0]=c+x*x*k;m[1]=y*x*k+z*s;m[2]=z*x*k-y*s;m[4]=x*y*k-z*s;m[5]=c+y*y*k;m[6]=z*y*k+x*s;m[8]=x*z*k+y*s;m[9]=y*z*k-x*s;m[10]=c+z*z*k;return m;}
+function rz(d){const t=d*Math.PI/180,c=Math.cos(t),s=Math.sin(t),m=I();m[0]=c;m[1]=s;m[4]=-s;m[5]=c;return m;}
+function persp(f,a,n,fa){const t=1/Math.tan(f/2),m=new Float32Array(16);m[0]=t/a;m[5]=t;m[10]=(fa+n)/(n-fa);m[11]=-1;m[14]=2*fa*n/(n-fa);return m;}
+function look(e,t,u){let z=[e[0]-t[0],e[1]-t[1],e[2]-t[2]];let l=Math.hypot(z[0],z[1],z[2]);z=z.map(v=>v/l);let x=[u[1]*z[2]-u[2]*z[1],u[2]*z[0]-u[0]*z[2],u[0]*z[1]-u[1]*z[0]];l=Math.hypot(x[0],x[1],x[2]);x=x.map(v=>v/l);const y=[z[1]*x[2]-z[2]*x[1],z[2]*x[0]-z[0]*x[2],z[0]*x[1]-z[1]*x[0]];const m=I();m[0]=x[0];m[4]=x[1];m[8]=x[2];m[1]=y[0];m[5]=y[1];m[9]=y[2];m[2]=z[0];m[6]=z[1];m[10]=z[2];m[12]=-(x[0]*e[0]+x[1]*e[1]+x[2]*e[2]);m[13]=-(y[0]*e[0]+y[1]*e[1]+y[2]*e[2]);m[14]=-(z[0]*e[0]+z[1]*e[1]+z[2]*e[2]);return m;}
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const SEGS={"0":"abcdef","1":"bc","2":"abdeg","3":"abcdg","4":"bcfg","5":"acdfg","6":"acdefg","7":"abc","8":"abcdefg","9":"abcdfg","-":"g"," ":""},LIT=[1.0,0.16,0.1],DIM=[0.22,0.05,0.04];
+const ZT=14,TH0=46,SW=-1,CANT=20,WZ=__WZ__;
+const ZE=__ZE__,RB1=__RB1__,RB2=__RB2__,RCAP=__RCAP__,KP=__KP__,RYAW=__RYAW__,YPX=__YPX__,YPY=__YPY__,SH=__SH__;
+const cam={az:-50,el:16,d:1500,t:[0,70,190]};
+const VIEWS={iso:[-50,18],front:[-90,0],side:[0,0],top:[-90,89]};
+const vis={base:true,electronics:true,shoulder:true,upper_arm:true,elbow:true,forearm:true,belts:true,wrist:true,hand:true};
+let dirty=1;
+function bg(){const s=getComputedStyle(document.documentElement).getPropertyValue("--stage").trim();const m=/^#([0-9a-f]{6})$/i.exec(s);if(!m)return[.96,.96,.94];const n=parseInt(m[1],16);return[(n>>16&255)/255,(n>>8&255)/255,(n&255)/255];}
+function draw(){
+const dpr=Math.min(window.devicePixelRatio||1,2),w=cv.clientWidth,h=cv.clientHeight;
+if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);}
+gl.viewport(0,0,cv.width,cv.height);
+const b=bg();gl.clearColor(b[0],b[1],b[2],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+const az=cam.az*Math.PI/180,el=cam.el*Math.PI/180;
+const asp=w/Math.max(1,h),cd=cam.d*(asp<1.15?Math.min(1.9,1.15/asp):1);   // narrow screens: step back so the whole arm fits
+const e=[cam.t[0]+cd*Math.cos(el)*Math.cos(az),cam.t[1]+cd*Math.cos(el)*Math.sin(az),cam.t[2]+cd*Math.sin(el)];
+gl.uniformMatrix4fv(loc.P,false,persp(0.62,cv.width/Math.max(1,cv.height),10,9000));
+gl.uniformMatrix4fv(loc.V,false,look(e,cam.t,[0,0,1]));
+const S=anim?anim.S:cart.on?cart.S:readS(),Q=mats(S),M=Q.M,MH=Q.MH,g=S.grip;
+// retro 7-segment display on the base: shows the base yaw angle (sign + 3 digits)
+const yv=Math.round(S.yaw),txt=(yv<0?"-":" ")+String(Math.abs(yv)).padStart(3,"0");
+parts.forEach(q=>{if(q.g==="obj"){if(!anim)return;}else if(q.g==="desk"){}else if(!vis[q.k])return;const mm=q.g==="obj"?anim.objM:q.g==="W_finger"?mul(MH,mul(tr(q.pv),mul(rax(q.ax,g-TH0),tr([-q.pv[0],-q.pv[1],-q.pv[2]])))):M[q.g];gl.uniformMatrix4fv(loc.M,false,mm);gl.uniform1f(loc.S,q.m==null?0.15:q.m);gl.uniform3fv(loc.C,q.sg?(SEGS[txt[q.sg[0]]]||"").indexOf("abcdefg"[q.sg[1]])>=0?LIT:DIM:q.c);gl.bindBuffer(gl.ARRAY_BUFFER,q.buf);gl.vertexAttribPointer(loc.a,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(loc.n,3,gl.FLOAT,false,24,12);gl.drawArrays(gl.TRIANGLES,0,q.cnt);});
+if(ws.on&&ws.buf)drawCloud(e,S);
+}
+function readS(){return {yaw:+$("yaw").value,pitch:+$("pitch").value,roll:+$("roll").value,pron:+$("pron").value,wp:+$("wp").value,wr:+$("wr").value,grip:+$("grip").value};}
+function mats(S){
+const sg=S.pitch,ep=S.roll,ps=S.yaw,ph=S.pron;
+const Ms=rx(-sg),piv=(m)=>mul(tr([0,0,ZE]),mul(m,tr([0,0,-ZE]))),Ec=piv(rx(-ep));
+const Yw=rz(ps),YP=mul(tr([YPX,YPY,0]),mul(rz(ps*RYAW),tr([-YPX,-YPY,0])));
+const SA=piv(rx(-ep+KP*ph)),SB=piv(rx(-ep-KP*ph)),FR=mul(Ec,piv(rz(ph))),ID=mul(Ec,piv(rz(-ph)));
+const M={foot:I(),desk:I(),yawpin:YP,yaw:Yw,arm:mul(Yw,Ms),cradle:mul(Yw,mul(Ms,Ec)),idle:mul(Yw,mul(Ms,ID)),sideA:mul(Yw,mul(Ms,SA)),sideB:mul(Yw,mul(Ms,SB)),fore:mul(Yw,mul(Ms,FR))};
+const wp=S.wp,wr=S.wr,g=S.grip,ww=SW*(g-TH0)*ZT,MW=mul(M.fore,tr([0,0,WZ])),MH=mul(MW,mul(rx(wp),rz(wr)));
+M.W_fixed=MW;M.W_pitch=mul(MW,rx(wp));M.W_idle=mul(MW,mul(rx(wp),rz(-wr)));M.W_A=mul(MW,rx(wp+wr));M.W_B=mul(MW,rx(wp-wr));M.W_roll=MH;M.W_worm=mul(MH,rz(ww));
+return {M:M,MH:MH};
+}
+// ---------- showcase animation: pick the apple, carry it, endless wrist roll, differential elbow ----------
+// keys: [t, yaw, pitch, roll(elbow), pron, wrist pitch, wrist roll, grip, easing of the wrist roll]
+const KF=[[0,0,0,0,0,0,0,46],[2.5,-50,30.16,69.09,0,-80.75,0,72],[4,-50,37.3,79.24,0,-63.46,0,72],[5,-50,37.3,79.24,0,-63.46,0,46],
+[6.5,-50,30.16,69.09,0,-80.75,0,46],[9.5,0,12,62,90,-45,180,46],[12,55,21.63,81,0,-77.38,360,46],[13.5,55,29.91,90.78,0,-59.31,360,46],
+[14.5,55,29.91,90.78,0,-59.31,360,72],[16,55,21.63,81,0,-77.38,360,72],[19,0,10,70,0,-10,360,46],[21,0,10,70,0,-10,540,75,"in"],
+[23,0,10,70,0,-10,900,20,"lin"],[25,0,10,70,0,-10,1260,75,"lin"],[27,0,10,70,0,-10,1620,20,"lin"],[29,0,10,70,0,-10,1980,75,"lin"],
+[31,0,10,70,0,-10,2160,46,"out"],[34.5,0,10,70,150,-50,2520,46],[38.5,0,10,70,-150,-50,2160,46],[40.5,0,10,70,0,-10,2160,46],[43,0,0,0,0,0,2160,46]];
+const CAPS=[[0,"Grasp: the arm reaches down to the apple and the Fin Ray fingers close"],[6.5,"Carry: forearm pronation and a full wrist turn with the apple"],
+[13.5,"Place and release"],[16,"Moving into position for the demo"],[19,"Endless wrist roll: the hand is powered by induction, with no cable to twist"],
+[31,"Differential elbow: ±150° pronation while the wrist stays free to spin"],[40.5,"Back to the start pose"]];
+const TG=5,TR=13.6,TEND=KF[KF.length-1][0];
+// camera keys [t, az, el, dist, target x, y, z]; dropped as soon as the viewer drags or zooms
+const CK=[[0,58,18,1500,0,170,20],[16,58,18,1500,0,170,20],[19,38,10,900,0,390,210],[31,38,10,900,0,390,210],
+[33,62,16,1250,0,260,170],[40.5,62,16,1250,0,260,170],[43,58,18,1500,0,170,20]];
+function camAt(t){t=clamp(t,0,TEND);let i=0;while(i<CK.length-2&&t>=CK[i+1][0])i++;const a=CK[i],b=CK[i+1],u=clamp((t-a[0])/(b[0]-a[0]),0,1),e=(1-Math.cos(Math.PI*u))/2,f=j=>a[j]+(b[j]-a[j])*e;
+cam.az=f(1);cam.el=f(2);cam.d=f(3);cam.t=[f(4),f(5),f(6)];}
+const KEYS=["yaw","pitch","roll","pron","wp","wr","grip"];
+function sample(t){t=clamp(t,0,TEND);let i=0;while(i<KF.length-2&&t>=KF[i+1][0])i++;const a=KF[i],b=KF[i+1],u=clamp((t-a[0])/(b[0]-a[0]),0,1);
+const e=(1-Math.cos(Math.PI*u))/2,ew=b[8]==="lin"?u:b[8]==="in"?u*u:b[8]==="out"?1-(1-u)*(1-u):e,S={};
+KEYS.forEach((k,j)=>{const w=k==="wr"?ew:e;S[k]=a[j+1]+(b[j+1]-a[j+1])*w;});return S;}
+let anim=null;
+const wrap=v=>((v+180)%360+360)%360-180;
+function stopAnim(){if(!anim)return;if(!anim.uc){cam.d=1500;cam.t=[0,70,190];cam.az=VIEWS.iso[0];cam.el=VIEWS.iso[1];}anim=null;$("play").textContent="▶ Showcase";$("cap").classList.remove("on");$("wr").value=wrap(+$("wr").value);ui();dirty=1;}
+function startAnim(){if(cart.on)setCart(false);anim={t0:performance.now(),MG:mats(sample(TG)).MH,MR:mats(sample(TR)).MH};anim.S=sample(0);anim.objM=anim.MG;
+camAt(0);$("play").textContent="■ Stop";$("cap").classList.add("on");dirty=1;}
+function stepAnim(){const t=(performance.now()-anim.t0)/1000;if(t>TEND+0.6){stopAnim();return;}
+const S=sample(t);anim.S=S;if(!anim.uc)camAt(t);anim.objM=t<TG?anim.MG:t<TR?mats(S).MH:anim.MR;
+let c="";CAPS.forEach(x=>{if(t>=x[0])c=x[1];});$("cap").textContent=c;
+$("yaw").value=Math.round(S.yaw);$("pitch").value=Math.round(S.pitch);$("roll").value=Math.round(S.roll);$("pron").value=Math.round(S.pron);
+$("wp").value=Math.round(S.wp);$("wr").value=Math.round(wrap(S.wr));$("grip").value=Math.round(S.grip);ui();dirty=1;}
+$("play").addEventListener("click",()=>{if(anim)stopAnim();else startAnim();});
+["yaw","pitch","roll","pron","wp","wr","grip"].forEach(i=>$(i).addEventListener("input",e=>{if(e.isTrusted&&anim)stopAnim();if(e.isTrusted&&cart.on){cart.S=readS();syncT();hudUpd("ok");}}));
+function ui(){const sg=+$("pitch").value,ep=+$("roll").value,ps=+$("yaw").value,ph=+$("pron").value;$("wpv").textContent=$("wp").value+"°";$("wrv").textContent=$("wr").value+"°";{const fa=+$("grip").value-CANT;$("gv").textContent=(fa>0?"+":"")+fa+"°";}$("pv").textContent=sg+"°";$("rv").textContent=ep+"°";$("yv").textContent=ps+"°";$("nv").textContent=ph+"°";const R=RB1*RB2,tA=ep+KP*ph,tB=ep-KP*ph;$("mot").textContent="Motor turns · base "+(ps*RYAW*5/360).toFixed(1)+" ("+(RYAW*5).toFixed(1)+":1) · shoulder "+(sg*RCAP/360).toFixed(1)+" ("+RCAP+":1 planetary) · elbow A "+(tA*R*5/360).toFixed(1)+", B "+(tB*R*5/360).toFixed(1)+" ("+(R*5).toFixed(0)+":1; same way = flexion, opposite = pronation). Shoulder axis "+SH.toFixed(0)+" mm above the desk.";dirty=1;}
+$("pitch").addEventListener("input",ui);["wp","wr","grip"].forEach(i=>$(i).addEventListener("input",ui));$("yaw").addEventListener("input",ui);$("pron").addEventListener("input",ui);$("roll").addEventListener("input",ui);
+[["base","Rotating base"],["electronics","Electronics and cables"],["shoulder","Shoulder drive"],["upper_arm","Upper arm"],["elbow","Elbow and cradle"],["forearm","Forearm"],["belts","Pulleys and belts"],["wrist","Wrist"],["hand","Hand"]].forEach(a=>{
+const l=document.createElement("label"),c=document.createElement("input");c.type="checkbox";c.checked=true;
+c.addEventListener("change",()=>{vis[a[0]]=c.checked;dirty=1;});l.appendChild(c);l.appendChild(document.createTextNode(a[1]));$("chips").appendChild(l);});
+function setView(v){cam.az=VIEWS[v][0];cam.el=VIEWS[v][1];dirty=1;}
+document.querySelectorAll("button[data-v]").forEach(bt=>bt.addEventListener("click",()=>{
+const v=bt.getAttribute("data-v");
+if(v==="reset"){stopAnim();$("pitch").value=0;$("roll").value=0;$("yaw").value=0;$("pron").value=0;$("wp").value=0;$("wr").value=0;$("grip").value=46;cam.d=1500;cam.t=[0,70,190];setView("iso");ui();if(cart.on){cart.S=readS();syncT();hudUpd("ok");}}else setView(v);}));
+const ptr=new Map();let last=0;
+function pdist(){if(ptr.size<2)return 0;const a=[...ptr.values()];return Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);}
+cv.addEventListener("pointerdown",e=>{if(anim)anim.uc=1;cv.setPointerCapture(e.pointerId);ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});last=pdist();});
+cv.addEventListener("pointermove",e=>{const o=ptr.get(e.pointerId);if(!o)return;const dx=e.clientX-o.x,dy=e.clientY-o.y;o.x=e.clientX;o.y=e.clientY;
+if(ptr.size===2){const d=pdist();if(last)cam.d=clamp(cam.d*last/d,150,3500);last=d;}
+else if(e.shiftKey||e.buttons===2){const az=cam.az*Math.PI/180,k=cam.d*0.0016;cam.t[0]+=Math.sin(az)*dx*k;cam.t[1]-=Math.cos(az)*dx*k;cam.t[2]+=dy*k;}
+else{cam.az-=dx*0.4;cam.el=clamp(cam.el+dy*0.4,-89,89);}
+dirty=1;});
+["pointerup","pointercancel"].forEach(t=>cv.addEventListener(t,e=>{ptr.delete(e.pointerId);last=pdist();}));
+cv.addEventListener("wheel",e=>{e.preventDefault();if(anim)anim.uc=1;cam.d=clamp(cam.d*Math.exp(e.deltaY*0.001),150,3500);dirty=1;},{passive:false});
+cv.addEventListener("contextmenu",e=>e.preventDefault());
+window.addEventListener("resize",()=>{dirty=1;});
+if(window.matchMedia)window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{dirty=1;});
+
+// ---------- cartesian jog: keyboard + on-screen pad; same kinematics as control/kinematics.py ----------
+const KLU=ZE,KLF=WZ-ZE,KD6=__D6__,KTIP=__TIP__,D2R=Math.PI/180,R2D=180/Math.PI;
+const KLIM=[[-170,170],[-30,90],[-60,105],[-180,180],[-90,90],[-1e9,1e9]],KNAME=["base","shoulder","elbow","pronation","wrist"];
+const kRx=d=>{const t=d*D2R,c=Math.cos(t),s=Math.sin(t);return[[1,0,0,0],[0,c,-s,0],[0,s,c,0],[0,0,0,1]];};
+const kRz=d=>{const t=d*D2R,c=Math.cos(t),s=Math.sin(t);return[[c,-s,0,0],[s,c,0,0],[0,0,1,0],[0,0,0,1]];};
+const kTz=L=>[[1,0,0,0],[0,1,0,0],[0,0,1,L],[0,0,0,1]];
+function kmm(A,B){const n=A.length,m=B[0].length,k=B.length,o=[];for(let i=0;i<n;i++){const r=[];for(let j=0;j<m;j++){let v=0;for(let t=0;t<k;t++)v+=A[i][t]*B[t][j];r.push(v);}o.push(r);}return o;}
+const kcol=(T,j)=>[T[0][j],T[1][j],T[2][j]],krot=T=>[0,1,2].map(i=>T[i].slice(0,3)),ktr=A=>A[0].map((_,j)=>A.map(r=>r[j]));
+function kax(u,d){const t=d*D2R,c=Math.cos(t),s=Math.sin(t),k=1-c,[x,y,z]=u;return[[c+x*x*k,x*y*k-z*s,x*z*k+y*s],[y*x*k+z*s,c+y*y*k,y*z*k-x*s],[z*x*k-y*s,z*y*k+x*s,c+z*z*k]];}
+function kfk(q){const sh=kmm(kRz(q[0]),kRx(-q[1])),el=kmm(kmm(sh,kTz(KLU)),kRx(-q[2])),wr=kmm(kmm(el,kRz(q[3])),kTz(KLF)),ha=kmm(kmm(wr,kRx(q[4])),kRz(q[5]));return{el:el,wr:wr,tcp:kmm(ha,kTz(KD6))};}
+function kik(p,R,prev,mj){const a=kcol(R,2),pw=[p[0]-KD6*a[0],p[1]-KD6*a[1],p[2]-KD6*a[2]],base=Math.hypot(pw[0],pw[1])<0.5?prev[0]:Math.atan2(-pw[0],pw[1])*R2D,sols=[];
+  for(const fl of[1,-1]){const q1=fl>0?base:wrap(base+180),r=fl*Math.hypot(pw[0],pw[1]),z=pw[2];let D=(r*r+z*z-KLU*KLU-KLF*KLF)/(2*KLU*KLF);if(Math.abs(D)>1)continue;
+    for(const eb of[1,-1]){const q3=eb*Math.acos(D)*R2D,t3=q3*D2R,q2=wrap((Math.atan2(r,z)-Math.atan2(KLF*Math.sin(t3),KLU+KLF*Math.cos(t3)))*R2D);
+      const W=kmm(ktr(krot(kmm(kRz(q1),kRx(-(q2+q3))))),R),s5=Math.hypot(W[0][2],W[1][2]);
+      for(const wf of[1,-1]){const q=[q1,q2,q3,0,Math.atan2(wf*s5,W[2][2])*R2D,0];
+        if(s5<1e-9){q[3]=prev[3];q[5]=Math.atan2(W[1][0],W[0][0])*R2D-q[3];}else{q[3]=Math.atan2(wf*W[0][2],-wf*W[1][2])*R2D;q[5]=Math.atan2(wf*W[2][0],wf*W[2][1])*R2D;}
+        q[5]=prev[5]+wrap(q[5]-prev[5]);sols.push(q);}}}
+  return kpick(sols,prev,mj);}
+function kpick(sols,prev,mj){if(!sols.length)return{why:"out of reach"};let best=null,bc=1e18,near=null,nc=1e18;
+  sols.forEach(q=>{const c=q.reduce((s,v,i)=>s+(v-prev[i])**2,0)+(q[2]<0?1e-6:0);if(c<nc){nc=c;near=q;}if(q.every((v,i)=>v>=KLIM[i][0]&&v<=KLIM[i][1])&&(!mj||[0,1,2].every(i=>Math.abs(q[i]-prev[i])<=mj))&&c<bc){bc=c;best=q;}});
+  if(!best&&mj&&near.every((v,j)=>v>=KLIM[j][0]&&v<=KLIM[j][1]))return{why:"the arm would have to flip pose suddenly"};
+  if(!best){const i=near.findIndex((v,j)=>v<KLIM[j][0]||v>KLIM[j][1]);return{why:(KNAME[i]||"joint")+" limit (it would need "+near[i].toFixed(0)+"°)"};}return{q:best};}
+// position only: pronation, wrist pitch and roll stay where they are, so forearm + hand act as one rigid link
+// (elbow -> grip = (ox, oy, oz) in the forearm frame; ox is a sideways offset, (oy, oz) lies in the arm plane)
+function kik3(p,prev,mj){const s4=Math.sin(prev[3]*D2R),c4=Math.cos(prev[3]*D2R),s5=Math.sin(prev[4]*D2R),c5=Math.cos(prev[4]*D2R);
+  const ox=KD6*s4*s5,oy=-KD6*c4*s5,oz=KLF+KD6*c5,L2=Math.hypot(oy,oz),be=Math.atan2(oy,oz),rho=Math.hypot(p[0],p[1]),r2=rho*rho-ox*ox,sols=[];
+  if(r2<0)return{why:"out of reach"};
+  for(const sY of[1,-1]){const Y=sY*Math.sqrt(r2),q1=(rho<0.5&&Math.abs(ox)<0.5)?prev[0]:wrap((Math.atan2(p[1],p[0])-Math.atan2(Y,ox))*R2D),Z=p[2];
+    const D=(Y*Y+Z*Z-KLU*KLU-L2*L2)/(2*KLU*L2);if(Math.abs(D)>1)continue;
+    for(const sg of[1,-1]){const g=sg*Math.acos(D);sols.push([q1,wrap((Math.atan2(Y,Z)-Math.atan2(L2*Math.sin(g),KLU+L2*Math.cos(g)))*R2D),wrap((g-be)*R2D),prev[3],prev[4],prev[5]]);}}
+  return kpick(sols,prev,mj);}
+const cart={on:false,S:null,T:null,G:null,keys:new Set(),fast:false,last:0,why:"ok",mode:"cyl",ready:false,orient:"follow"};
+const READY=[0,10,95,0,-75,0],VMAX=[90,90,120,240,240,400];       // ready pose; joint speed limits in deg/s
+const MODES={cyl:"cylindrical",view:"view",hand:"hand",joints:"joints"};
+const LEG={cyl:"<kbd>←</kbd> <kbd>→</kbd> orbit around the base · <kbd>↑</kbd> <kbd>↓</kbd> reach out and pull in · <kbd>W</kbd> <kbd>S</kbd> up and down",
+  view:"<kbd>←</kbd><kbd>↑</kbd><kbd>→</kbd><kbd>↓</kbd> move the grip on the plane, relative to the view · <kbd>W</kbd> <kbd>S</kbd> up and down",
+  hand:"<kbd>↑</kbd> <kbd>↓</kbd> forward and back along the fingers · <kbd>←</kbd> <kbd>→</kbd> <kbd>W</kbd> <kbd>S</kbd> sideways, relative to the view",
+  joints:"<kbd>←</kbd> <kbd>→</kbd> base · <kbd>↑</kbd> <kbd>↓</kbd> shoulder · <kbd>W</kbd> <kbd>S</kbd> elbow · <kbd>R</kbd> <kbd>F</kbd> pronation · <kbd>A</kbd> <kbd>D</kbd> wrist pitch · <kbd>Q</kbd> <kbd>E</kbd> roll"};
+const KLAB={cyl:{f:"reach",b:"pull in",l:"orbit",r:"orbit",u:"up",d:"down"},view:{f:"away",b:"closer",l:"left",r:"right",u:"up",d:"down"},hand:{f:"advance",b:"retreat",l:"left",r:"right",u:"up",d:"down"},joints:{f:"shoulder",b:"shoulder",l:"base",r:"base",u:"elbow",d:"elbow"}};
+const s2q=S=>[S.yaw,S.pitch,S.roll,S.pron,S.wp,S.wr];
+function setQ(q){[cart.S.yaw,cart.S.pitch,cart.S.roll,cart.S.pron,cart.S.wp,cart.S.wr]=q;}
+function syncT(){const F=kfk(s2q(cart.S));cart.T={p:kcol(F.tcp,3),R:krot(F.tcp)};cart.G=s2q(cart.S);}
+function deskBad(q){const F=kfk(q),tz=F.tcp[2][3]+SH,tip=tz+(KTIP-KD6)*F.tcp[2][2];
+  if(tz<3||tip<3)return"fingers on the desk";if(F.wr[2][3]+SH<45||F.el[2][3]+SH<45)return"arm on the desk";return"";}
+function singular(q){const F=kfk(q);return Math.abs(q[2])<4||Math.hypot(F.wr[0][3],F.wr[1][3])<25;}
+function hudUpd(why){if(why)cart.why=why;const T=cart.T,a=kcol(T.R,2),tilt=Math.acos(clamp(-a[2],-1,1))*R2D,ok=cart.why==="ok",info=cart.why.startsWith("slowing")||cart.why.startsWith("ready")||cart.why.startsWith("tilting");
+  $("hud").innerHTML="mode "+MODES[cart.mode]+(cart.mode==="joints"?"":cart.orient==="follow"?" · wrist still":" · orientation fixed")+"  ·  grip  x "+T.p[0].toFixed(0)+"  y "+T.p[1].toFixed(0)+"  z "+(T.p[2]+SH).toFixed(0)+" mm<br>tilt "+tilt.toFixed(0)+"°  ·  roll "+cart.S.wr.toFixed(0)+"°<br><span class=\""+(ok||info?"ok":"bad")+"\">"+(ok?"reachable":info?cart.why:"stopped: "+cart.why)+"</span>";}
+function applyS(){const S=cart.S;$("yaw").value=Math.round(S.yaw);$("pitch").value=Math.round(S.pitch);$("roll").value=Math.round(S.roll);$("pron").value=Math.round(S.pron);
+  $("wp").value=Math.round(S.wp);$("wr").value=Math.round(wrap(S.wr));$("grip").value=Math.round(S.grip);ui();dirty=1;}
+function setMode(m){cart.mode=m;document.querySelectorAll("#modes button").forEach(b=>{const on=b.getAttribute("data-m")===m;b.classList.toggle("on",on);b.setAttribute("aria-pressed",on);});
+  $("leg").innerHTML=LEG[m];const kl=KLAB[m];document.querySelectorAll("#kb i[data-l]").forEach(i=>{i.textContent=kl[i.getAttribute("data-l")];});if(cart.on)hudUpd();}
+function setOrient(o){cart.orient=o;$("orient").textContent=o==="follow"?"Hand: follows the arm (O)":"Hand: fixed in space (O)";$("orient").setAttribute("aria-pressed",o==="fixed");if(cart.on){syncT();hudUpd("ok");}}
+function setCart(on){cart.on=on;cart.keys.clear();$("cart").classList.toggle("on",on);$("cart").setAttribute("aria-pressed",on);$("cart").textContent=on?"Release (Esc)":"Take control (C)";$("deck").classList.toggle("live",on);$("dst").textContent=on?"Live":"Standby";
+  ["hud","pad","keys","vert","ready","modes"].forEach(i=>$(i).hidden=!on);$("hint").hidden=on;
+  if(on){cart.S=readS();syncT();hudUpd("ok");if(singular(cart.G))goReady();}else{applyS();}dirty=1;}
+function goReady(){cart.G=READY.slice();cart.G[5]=cart.S.wr+wrap(READY[5]-cart.S.wr);cart.ready=true;hudUpd("ready pose…");}
+$("cart").addEventListener("click",()=>setCart(!cart.on));
+$("ready").addEventListener("click",goReady);$("orient").addEventListener("click",()=>setOrient(cart.orient==="follow"?"fixed":"follow"));
+document.querySelectorAll("#modes button").forEach(b=>b.addEventListener("click",()=>setMode(b.getAttribute("data-m"))));
+$("vert").addEventListener("click",()=>{const p=cart.T.p,az=Math.atan2(-p[0],p[1]),t=[Math.cos(az),Math.sin(az),0],z=[0,0,-1],y=[z[1]*t[2]-z[2]*t[1],z[2]*t[0]-z[0]*t[2],z[0]*t[1]-z[1]*t[0]];
+  const R=[[t[0],y[0],z[0]],[t[1],y[1],z[1]],[t[2],y[2],z[2]]],res=kik(p,R,cart.G);
+  const bad=res.q?deskBad(res.q):res.why;
+  if(!bad){cart.T={p:p,R:R};cart.G=res.q;hudUpd("ok");}else hudUpd(bad);});
+const KMAP={ArrowUp:"f",ArrowDown:"b",ArrowLeft:"l",ArrowRight:"r",KeyW:"u",PageUp:"u",KeyS:"d",PageDown:"d",KeyA:"tm",KeyD:"tp",KeyQ:"rm",KeyE:"rp",KeyZ:"gc",KeyX:"go",KeyR:"pp",KeyF:"pm"};
+const capOf=c=>document.querySelector('#kb .kc[data-code="'+(c==="ShiftRight"?"ShiftLeft":c==="PageUp"?"KeyW":c==="PageDown"?"KeyS":c)+'"]');
+window.addEventListener("keydown",e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;const t=e.target&&e.target.tagName;if(t==="SELECT"||(t==="INPUT"&&e.target.type!=="range"&&e.target.type!=="checkbox"))return;
+  const kc=capOf(e.code);if(kc)kc.classList.add("dn");
+  if(e.code==="KeyC"&&!anim){setCart(!cart.on);e.preventDefault();return;}
+  if(!cart.on&&!anim&&KMAP[e.code]){setCart(true);}
+  if(!cart.on)return;if(e.code==="Escape"){setCart(false);return;}
+  if(e.code==="KeyP"){goReady();e.preventDefault();return;}
+  if(e.code==="KeyO"){setOrient(cart.orient==="follow"?"fixed":"follow");e.preventDefault();return;}
+  if(e.code==="KeyM"){const k=Object.keys(MODES);setMode(k[(k.indexOf(cart.mode)+1)%k.length]);e.preventDefault();return;}
+  const a=KMAP[e.code];if(a){cart.keys.add(a);cart.fast=e.shiftKey||cart.shiftLock;e.preventDefault();}},true);
+window.addEventListener("keyup",e=>{const kc=capOf(e.code);if(kc)kc.classList.remove("dn");const a=KMAP[e.code];if(a)cart.keys.delete(a);cart.fast=e.shiftKey||cart.shiftLock;},true);
+window.addEventListener("blur",()=>{cart.keys.clear();document.querySelectorAll("#kb .kc.dn").forEach(k=>k.classList.remove("dn"));});
+document.querySelectorAll("#kb .kc[data-sys]").forEach(b=>b.addEventListener("click",()=>{const c=b.getAttribute("data-code");if(c==="Escape")setCart(false);else if(cart.on){if(c==="KeyM"){const k=Object.keys(MODES);setMode(k[(k.indexOf(cart.mode)+1)%k.length]);}else if(c==="KeyO")setOrient(cart.orient==="follow"?"fixed":"follow");else if(c==="KeyP")goReady();}}));
+document.querySelectorAll("#kb .kc[data-shift]").forEach(b=>b.addEventListener("click",()=>{cart.shiftLock=!cart.shiftLock;cart.fast=cart.shiftLock;b.classList.toggle("dn",cart.shiftLock);}));
+document.querySelectorAll("#pad button,#kb .kc[data-a]").forEach(b=>{const a=b.getAttribute("data-a");
+  b.addEventListener("pointerdown",e=>{e.preventDefault();if(!cart.on&&!anim)setCart(true);b.setPointerCapture(e.pointerId);cart.keys.add(a);});
+  ["pointerup","pointercancel","lostpointercapture"].forEach(t=>b.addEventListener(t,()=>cart.keys.delete(a)));});
+const vadd=(a,b,s)=>[a[0]+b[0]*s,a[1]+b[1]*s,a[2]+b[2]*s],vnorm=v=>{const n=Math.hypot(v[0],v[1],v[2]);return n>1e-9?[v[0]/n,v[1]/n,v[2]/n]:null;};
+function cartStep(now){const dt=Math.min(0.1,(now-(cart.last||now))/1000);cart.last=now;if(dt<=0)return;
+  const k=cart.keys,f=cart.fast?3:1;let why="",moved=false;
+  let lag=0;for(let i=0;i<6;i++)lag=Math.max(lag,Math.abs(cart.G[i]-s2q(cart.S)[i]));
+  if(k.size&&!cart.ready){
+    if(cart.mode==="joints"){const d=[(k.has("r")?1:0)-(k.has("l")?1:0),(k.has("f")?1:0)-(k.has("b")?1:0),(k.has("u")?1:0)-(k.has("d")?1:0),(k.has("pp")?1:0)-(k.has("pm")?1:0),(k.has("tp")?1:0)-(k.has("tm")?1:0),(k.has("rp")?1:0)-(k.has("rm")?1:0)];
+      const g=cart.G.slice();for(let i=0;i<6;i++)g[i]=clamp(g[i]+d[i]*VMAX[i]*0.5*f*dt,KLIM[i][0],KLIM[i][1]);
+      const bad=deskBad(g);if(!bad){cart.G=g;const F=kfk(g);cart.T={p:kcol(F.tcp,3),R:krot(F.tcp)};}else why=bad;}
+    else if(lag<20){
+      const v=120*f*dt,az=cam.az*D2R,fw=[-Math.cos(az),-Math.sin(az),0],rt=[-Math.sin(az),Math.cos(az),0],up=[0,0,1],moves=[];
+      const ax=(p,n)=>(k.has(p)?1:0)-(k.has(n)?1:0),h1=ax("r","l"),h2=ax("f","b"),vz=ax("u","d"),tl=ax("tp","tm"),rl=ax("rp","rm");
+      if(cart.mode==="view"){const d=vnorm(vadd(vadd([0,0,0],rt,h1),fw,h2));if(d)moves.push(T=>({p:vadd(T.p,d,v),R:T.R}));if(vz)moves.push(T=>({p:vadd(T.p,up,vz*v),R:T.R}));}
+      if(cart.mode==="cyl"){if(h1)moves.push(T=>{const sg=(-T.p[1]*rt[0]+T.p[0]*rt[1])>=0?1:-1,M=krot(kRz(h1*sg*40*f*dt));return{p:[M[0][0]*T.p[0]+M[0][1]*T.p[1],M[1][0]*T.p[0]+M[1][1]*T.p[1],T.p[2]],R:kmm(M,T.R)};});
+        if(h2)moves.push(T=>{const rd=vnorm([T.p[0],T.p[1],0])||[-Math.sin(cart.S.yaw*D2R),Math.cos(cart.S.yaw*D2R),0];return{p:vadd(T.p,rd,h2*v),R:T.R};});
+        if(vz)moves.push(T=>({p:vadd(T.p,up,vz*v),R:T.R}));}
+      if(cart.mode==="hand"){const a=kcol(cart.T.R,2),pr=w=>vnorm(vadd(w,a,-(w[0]*a[0]+w[1]*a[1]+w[2]*a[2])));
+        if(h2)moves.push(T=>({p:vadd(T.p,kcol(T.R,2),h2*v),R:T.R}));const s1=pr(rt),s2=pr(up);
+        if(h1&&s1)moves.push(T=>({p:vadd(T.p,s1,h1*v),R:T.R}));if(vz&&s2)moves.push(T=>({p:vadd(T.p,s2,vz*v),R:T.R}));}
+      const npos=moves.length;
+      if(tl)moves.push(T=>{const a2=Math.atan2(-T.p[0],T.p[1]);return{p:T.p,R:kmm(kax([Math.cos(a2),Math.sin(a2),0],tl*45*f*dt),T.R)};});
+      if(rl)moves.push(T=>({p:T.p,R:kmm(T.R,krot(kRz(rl*150*f*dt)))}));
+      if(cart.orient==="follow"){
+        moves.forEach((m,i)=>{if(i>=npos)return;const c=m(cart.T);let r=kik3(c.p,cart.G,25);
+          // blocked with the wrist where it is? let the wrist pitch help, the smallest bend first
+          if(!r.q||deskBad(r.q))for(const d of[2,-2,5,-5,10,-10,20,-20]){const g=cart.G.slice();g[4]=g[4]+d;if(g[4]<KLIM[4][0]||g[4]>KLIM[4][1])continue;const r2=kik3(c.p,g,25);if(r2.q&&!deskBad(r2.q)){r=r2;break;}}
+          const bad=r.q?deskBad(r.q):r.why;if(!bad){cart.G=r.q;const F=kfk(r.q);cart.T={p:kcol(F.tcp,3),R:krot(F.tcp)};}else why=bad;});
+        if(tl||rl){const g=cart.G.slice();g[4]=clamp(g[4]-tl*45*f*dt,KLIM[4][0],KLIM[4][1]);g[5]+=rl*150*f*dt;const bad=deskBad(g);if(!bad){cart.G=g;const F=kfk(g);cart.T={p:kcol(F.tcp,3),R:krot(F.tcp)};}else why=bad;}}
+      else moves.forEach((m,i)=>{const c=m(cart.T);let r=kik(c.p,c.R,cart.G,25),bad=r.q?deskBad(r.q):r.why;
+        // position move blocked with the hand fixed? tilt the hand as little as needed (about the horizontal tangent)
+        if(bad&&i<npos){const a2=Math.atan2(-c.p[0],c.p[1]),tg=[Math.cos(a2),Math.sin(a2),0];
+          for(const d of[2,-2,5,-5,10,-10]){const R2=kmm(kax(tg,d),c.R),r2=kik(c.p,R2,cart.G,25);if(r2.q&&!deskBad(r2.q)){c.R=R2;r=r2;bad="";why="tilting the hand to get there";break;}}}
+        if(!bad){cart.T=c;cart.G=r.q;moved=true;}else why=bad;});}
+    else why="slowing down: close to a singularity";
+    const g=(k.has("go")?1:0)-(k.has("gc")?1:0);if(g){cart.S.grip=clamp(cart.S.grip+g*40*f*dt,11,80);dirty=1;}}
+  // the joints chase the goal with a synchronised move (straight line in joint space, each joint within its speed limit)
+  const q=s2q(cart.S),dq=cart.G.map((g,i)=>g-q[i]);let sc=1;for(let i=0;i<6;i++)if(Math.abs(dq[i])>1e-9)sc=Math.min(sc,VMAX[i]*f*dt/Math.abs(dq[i]));
+  const done=sc>=1,qn=q.map((v,i)=>v+dq[i]*Math.min(1,sc));
+  if(dq.some(x=>Math.abs(x)>1e-9)){const bad=deskBad(qn);if(bad){cart.G=q;syncT();why=bad;}else{setQ(qn);if(!done&&!why&&!cart.ready)why="slowing down: close to a singularity";}}
+  if(cart.ready&&done){cart.ready=false;syncT();why="ok";}
+  if(cart.ready)why="ready pose…";
+  if(k.size||dq.some(x=>Math.abs(x)>1e-9)||why){applyS();hudUpd(why||"ok");}}
+// ---------- reachable workspace cloud ----------
+// 'all poses': grip centre for random joint sets inside the limits (one point per 15 mm voxel), coloured by height.
+// 'top grasp': points where the hand can grasp straight down (inverse kinematics on a 2D grid in the arm plane,
+// then swept around the base within +-170 deg). Both exclude poses where fingertips, wrist or elbow would touch the desk.
+const ws={on:false,buf:null,n:0,nAll:0,nV:0};
+const cpr=gl.createProgram();
+gl.attachShader(cpr,sh(gl.VERTEX_SHADER,"attribute vec3 a;attribute float k;uniform mat4 uP,uV;uniform float uMode,uPx;uniform vec3 uN;varying vec3 vC;void main(){float keep=uMode<1.5?(abs(k-uMode)<.5?1.:0.):(abs(dot(a,uN))<9.?1.:0.);float h=clamp((a.z+149.)/650.,0.,1.);vec3 c0=mix(vec3(.16,.42,.86),vec3(.95,.55,.12),h);vC=k>.5?vec3(.15,.72,.38):(uMode>1.5?vec3(.45,.58,.78):c0);gl_Position=uP*uV*vec4(a,1.);gl_PointSize=keep*uPx*(k>.5&&uMode>1.5?1.6:1.);if(keep<.5)gl_Position=vec4(2.,2.,2.,1.);}"));
+gl.attachShader(cpr,sh(gl.FRAGMENT_SHADER,"precision mediump float;varying vec3 vC;uniform float uA;void main(){vec2 d=gl_PointCoord-.5;if(dot(d,d)>.25)discard;gl_FragColor=vec4(vC,uA);}"));
+gl.linkProgram(cpr);
+const cl={a:gl.getAttribLocation(cpr,"a"),k:gl.getAttribLocation(cpr,"k"),P:gl.getUniformLocation(cpr,"uP"),V:gl.getUniformLocation(cpr,"uV"),M:gl.getUniformLocation(cpr,"uMode"),Px:gl.getUniformLocation(cpr,"uPx"),N:gl.getUniformLocation(cpr,"uN"),A:gl.getUniformLocation(cpr,"uA")};
+function tcpFast(q1,q2,q3,q4,q5,out){const a=q2*D2R,b=(q2+q3)*D2R,c1=Math.cos(q1*D2R),s1=Math.sin(q1*D2R),s4=Math.sin(q4*D2R),c4=Math.cos(q4*D2R),s5=Math.sin(q5*D2R),c5=Math.cos(q5*D2R),cb=Math.cos(b),sb=Math.sin(b);
+  const rw=KLU*Math.sin(a)+KLF*sb,zw=KLU*Math.cos(a)+KLF*cb,vx=s4*s5,vy=-c4*s5,vz=c5,uy=cb*vy+sb*vz,uz=-sb*vy+cb*vz,zx=c1*vx-s1*uy,zy=s1*vx+c1*uy;
+  out[0]=-s1*rw+KD6*zx;out[1]=c1*rw+KD6*zy;out[2]=zw+KD6*uz;out[3]=zw+KTIP*uz;out[4]=zw;out[5]=KLU*Math.cos(a);return out;}
+function buildCloud(){const t0=performance.now(),V=15,seen=new Set(),pts=[],o=new Float64Array(6),L=KLIM;
+  for(let i=0;i<900000;i++){const q1=L[0][0]+Math.random()*(L[0][1]-L[0][0]),q2=L[1][0]+Math.random()*(L[1][1]-L[1][0]),q3=L[2][0]+Math.random()*(L[2][1]-L[2][0]),q4=L[3][0]+Math.random()*360,q5=L[4][0]+Math.random()*180;
+    tcpFast(q1,q2,q3,q4,q5,o);if(o[2]+SH<3||o[3]+SH<3||o[4]+SH<45||o[5]+SH<45)continue;
+    const kx=Math.round(o[0]/V),ky=Math.round(o[1]/V),kz=Math.round(o[2]/V),key=(kx+100)*40000+(ky+100)*200+(kz+100);if(seen.has(key))continue;seen.add(key);pts.push((kx+(Math.random()-.5)*.9)*V,(ky+(Math.random()-.5)*.9)*V,(kz+(Math.random()-.5)*.9)*V,0);}
+  const nAll=pts.length/4;let nV=0;
+  // vertical grasp: grid on the arm plane (x = 0, signed reach along y), then swept around the base
+  const z0=-SH+3,cells=[];
+  for(let r=-660;r<=660;r+=V)for(let z=z0;z<=520;z+=V){const p=[0,r,z],R=[[1,0,0],[0,-1,0],[0,0,-1]],res=kik(p,R,[0,30,60,0,-60,0]);
+    if(!res.q)continue;const F=kfk(res.q),tip=F.tcp[2][3]+SH+(KTIP-KD6)*F.tcp[2][2];if(tip<3||F.wr[2][3]+SH<45||F.el[2][3]+SH<45)continue;cells.push([r,z,res.q[0]]);}
+  cells.forEach(([r,z,q1s])=>{const ar=Math.abs(r),n=Math.max(1,Math.round(2*Math.PI*ar/V));for(let j=0;j<n;j++){const ph=-180+360*j/n;if(Math.abs(wrap(q1s+ph))>170)continue;const c=Math.cos(ph*D2R),s2=Math.sin(ph*D2R);pts.push(-s2*r,c*r,z,1);nV++;}});
+  const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(pts),gl.STATIC_DRAW);
+  ws.buf=buf;ws.n=pts.length/4;ws.nAll=nAll;ws.nV=nV;
+  let rmin=1e9,rmax=0;cells.forEach(c=>{if(c[0]>0){rmin=Math.min(rmin,c[0]);rmax=Math.max(rmax,c[0]);}});ws.rv=[rmin,rmax];ws.ms=Math.round(performance.now()-t0);}
+function wsInfo(){const m=+$("wsm").value;$("wsinfo").textContent=!ws.on?"":m===0?"Each point is a 15 mm cube the grip reaches with at least one orientation. Colour = height.":
+  m===1?"Points where the hand can grasp from above with the fingers vertical: forwards from "+ws.rv[0]+" to "+ws.rv[1]+" mm from the base axis.":
+  "18 mm slice on the vertical plane of the arm: blue = reachable, green = top grasp. Turn the base and the slice follows.";}
+function drawCloud(e,S){gl.useProgram(cpr);gl.uniformMatrix4fv(cl.P,false,persp(0.62,cv.width/Math.max(1,cv.height),10,9000));gl.uniformMatrix4fv(cl.V,false,look(e,cam.t,[0,0,1]));
+  const m=+$("wsm").value,dpr=Math.min(window.devicePixelRatio||1,2);gl.uniform1f(cl.M,m);gl.uniform1f(cl.Px,(m===2?4.2:m===0?2.0:2.6)*dpr*clamp(1700/cam.d,0.6,2.2));
+  const q1=S.yaw*D2R;gl.uniform3fv(cl.N,[Math.cos(q1),Math.sin(q1),0]);
+  gl.disableVertexAttribArray(loc.n);gl.enableVertexAttribArray(cl.a);gl.enableVertexAttribArray(cl.k);gl.bindBuffer(gl.ARRAY_BUFFER,ws.buf);gl.vertexAttribPointer(cl.a,3,gl.FLOAT,false,16,0);gl.vertexAttribPointer(cl.k,1,gl.FLOAT,false,16,12);
+  gl.uniform1f(cl.A,m===0?0.45:1.0);if(m===0){gl.enable(gl.BLEND);gl.blendFuncSeparate(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA,gl.ZERO,gl.ONE);gl.depthMask(false);}
+  gl.drawArrays(gl.POINTS,0,ws.n);gl.disable(gl.BLEND);gl.depthMask(true);gl.disableVertexAttribArray(cl.k);gl.enableVertexAttribArray(loc.n);gl.useProgram(pr);}
+$("ws").addEventListener("change",()=>{ws.on=$("ws").checked;if(ws.on&&!ws.buf){$("wsinfo").textContent="computing the cloud…";setTimeout(()=>{buildCloud();wsInfo();dirty=1;},30);}else wsInfo();dirty=1;});
+$("wsm").addEventListener("change",()=>{if(!ws.on){$("ws").checked=true;$("ws").dispatchEvent(new Event("change"));}else{wsInfo();dirty=1;}});
+setMode("cyl");ui();if(location.hash==="#cartesian")setTimeout(()=>setCart(true),300);
+(function loop(now){if(anim)stepAnim();else if(cart.on)cartStep(now||performance.now());if(dirty){dirty=0;draw();}requestAnimationFrame(loop);})();
+})();
+</script></body></html>

@@ -1,0 +1,5 @@
+cadquery>=2.4
+cq_gears @ git+https://github.com/meadiode/cq_gears.git
+numpy
+schemdraw>=0.18
+# optional, only for tools/preview.js (README image): npm install playwright

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Robot Wrist and Hand 3D</title>
+<style>
+:root{--bg:#f6f5f1;--fg:#1f2328;--mut:#5d646d;--card:#fff;--bd:#d8d6ce;--ac:#1d9e75;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1c1f;--fg:#e8e6df;--mut:#9aa0a8;--card:#25272b;--bd:#3a3d42;--ac:#3fc79a}}
+:root[data-theme="dark"]{--bg:#1b1c1f;--fg:#e8e6df;--mut:#9aa0a8;--card:#25272b;--bd:#3a3d42;--ac:#3fc79a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:900px;margin:0 auto;padding:12px}
+h1{font-size:16px;margin:4px 0 8px;font-weight:600}
+#stage{position:relative;border:1px solid var(--bd);border-radius:12px;overflow:hidden;background:var(--bg)}
+canvas{display:block;width:100%;height:min(64vh,560px);touch-action:none;cursor:grab}
+.hint{position:absolute;left:10px;bottom:8px;right:10px;font-size:12px;color:var(--mut);pointer-events:none}
+.panel{margin-top:10px;padding:12px;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
+.row{display:flex;align-items:center;gap:10px;margin:6px 0;flex-wrap:wrap}
+.row label.l{min-width:130px}
+input[type=range]{flex:1;min-width:140px;accent-color:var(--ac)}
+.val{min-width:48px;text-align:right;font-variant-numeric:tabular-nums}
+.chips label{display:flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--bd);border-radius:999px}
+button{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:6px 12px}
+.mot{color:var(--mut);font-size:13px}
+</style></head><body><main>
+<h1>Robot wrist and hand (draft v1.23, passive hand)</h1>
+<div id="stage"><canvas id="cv"></canvas><div class="hint">Drag to orbit, pinch or scroll to zoom, Shift or right button to pan.</div></div>
+<div class="panel">
+<div class="row"><label class="l" for="pitch">Pitch</label><input id="pitch" type="range" min="-90" max="90" value="0" step="1"><span class="val" id="pv">0°</span></div>
+<div class="row"><label class="l" for="roll">Roll</label><input id="roll" type="range" min="-180" max="180" value="0" step="1"><span class="val" id="rv">0°</span></div>
+<div class="row"><label class="l" for="grip">Finger opening</label><input id="grip" type="range" min="11" max="80" value="46" step="1"><span class="val" id="gv">+26°</span></div>
+<div class="mot" id="mot"></div>
+<div class="row chips" id="chips"></div>
+<div class="row"><button data-v="iso">Isometric</button><button data-v="front">Front</button><button data-v="top">Top</button><button data-v="reset">Reset</button></div>
+</div></main>
+<script>
+(function(){
+const D=__DATA__;
+const $=id=>document.getElementById(id);
+const cv=$("cv"),gl=cv.getContext("webgl",{antialias:true});
+if(!gl){cv.insertAdjacentHTML("afterend","<p style=\"padding:12px\">WebGL is not available on this device.</p>");return;}
+function dec(s){const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u.buffer;}
+function sh(t,src){const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);return s;}
+const pr=gl.createProgram();
+gl.attachShader(pr,sh(gl.VERTEX_SHADER,"attribute vec3 a;attribute vec3 nn;uniform mat4 uP,uV,uM;varying vec3 vN,vP;void main(){vec4 p=uV*uM*vec4(a,1.);gl_Position=uP*p;vP=p.xyz;vN=(uV*uM*vec4(nn,0.)).xyz;}"));
+gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,"precision mediump float;varying vec3 vN,vP;uniform vec3 uC;uniform float uS;void main(){vec3 N=normalize(vN);float l=.36+.64*abs(dot(N,normalize(vec3(.35,.5,.8))));gl_FragColor=vec4(uC*l,1.);}"));
+gl.linkProgram(pr);gl.useProgram(pr);
+const loc={a:gl.getAttribLocation(pr,"a"),n:gl.getAttribLocation(pr,"nn"),P:gl.getUniformLocation(pr,"uP"),V:gl.getUniformLocation(pr,"uV"),M:gl.getUniformLocation(pr,"uM"),C:gl.getUniformLocation(pr,"uC"),S:gl.getUniformLocation(pr,"uS")};
+gl.enableVertexAttribArray(loc.a);gl.enableVertexAttribArray(loc.n);gl.enable(gl.DEPTH_TEST);
+const parts=D.map(d=>{
+const pos=new Float32Array(dec(d.p)),idx=new Uint32Array(dec(d.i)),n=idx.length,out=new Float32Array(n*6);
+for(let t=0;t<n;t+=3){
+const a=idx[t]*3,b=idx[t+1]*3,c=idx[t+2]*3;
+const ux=pos[b]-pos[a],uy=pos[b+1]-pos[a+1],uz=pos[b+2]-pos[a+2],vx=pos[c]-pos[a],vy=pos[c+1]-pos[a+1],vz=pos[c+2]-pos[a+2];
+let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;const L=Math.hypot(nx,ny,nz)||1;nx/=L;ny/=L;nz/=L;
+[a,b,c].forEach((o,k)=>{const q=(t+k)*6;out[q]=pos[o];out[q+1]=pos[o+1];out[q+2]=pos[o+2];out[q+3]=nx;out[q+4]=ny;out[q+5]=nz;});
+}
+const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,out,gl.STATIC_DRAW);
+return {g:d.g,k:d.k,c:d.c,m:d.m,pv:d.pv,ax:d.ax,buf:buf,cnt:n};
+});
+const I=()=>new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);
+function mul(a,b){const o=new Float32Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+r]*b[c*4+k];o[c*4+r]=s;}return o;}
+function rx(d){const t=d*Math.PI/180,c=Math.cos(t),s=Math.sin(t),m=I();m[5]=c;m[6]=s;m[9]=-s;m[10]=c;return m;}
+function tr(p){const m=I();m[12]=p[0];m[13]=p[1];m[14]=p[2];return m;}
+function rax(u,d){const t=d*Math.PI/180,c=Math.cos(t),s=Math.sin(t),x=u[0],y=u[1],z=u[2],k=1-c,m=I();m[0]=c+x*x*k;m[1]=y*x*k+z*s;m[2]=z*x*k-y*s;m[4]=x*y*k-z*s;m[5]=c+y*y*k;m[6]=z*y*k+x*s;m[8]=x*z*k+y*s;m[9]=y*z*k-x*s;m[10]=c+z*z*k;return m;}
+function rz(d){const t=d*Math.PI/180,c=Math.cos(t),s=Math.sin(t),m=I();m[0]=c;m[1]=s;m[4]=-s;m[5]=c;return m;}
+function persp(f,a,n,fa){const t=1/Math.tan(f/2),m=new Float32Array(16);m[0]=t/a;m[5]=t;m[10]=(fa+n)/(n-fa);m[11]=-1;m[14]=2*fa*n/(n-fa);return m;}
+function look(e,t,u){let z=[e[0]-t[0],e[1]-t[1],e[2]-t[2]];let l=Math.hypot(z[0],z[1],z[2]);z=z.map(v=>v/l);let x=[u[1]*z[2]-u[2]*z[1],u[2]*z[0]-u[0]*z[2],u[0]*z[1]-u[1]*z[0]];l=Math.hypot(x[0],x[1],x[2]);x=x.map(v=>v/l);const y=[z[1]*x[2]-z[2]*x[1],z[2]*x[0]-z[0]*x[2],z[0]*x[1]-z[1]*x[0]];const m=I();m[0]=x[0];m[4]=x[1];m[8]=x[2];m[1]=y[0];m[5]=y[1];m[9]=y[2];m[2]=z[0];m[6]=z[1];m[10]=z[2];m[12]=-(x[0]*e[0]+x[1]*e[1]+x[2]*e[2]);m[13]=-(y[0]*e[0]+y[1]*e[1]+y[2]*e[2]);m[14]=-(z[0]*e[0]+z[1]*e[1]+z[2]*e[2]);return m;}
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const ZT=14,TH0=46,SW=-1,TMIN=11,TMAX=80,THC=46,CANT=20,SWON=75.3;
+const cam={az:-58,el:22,d:760,t:[0,0,70]};
+const VIEWS={iso:[-58,22],front:[-90,0],top:[-90,89]};
+const vis={core:true,bones:true,belts:true,motors:true,hand:true,flange:true,cables:true,apple:false};
+let dirty=1;
+function bg(){const s=getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();const m=/^#([0-9a-f]{6})$/i.exec(s);if(!m)return[.96,.96,.94];const n=parseInt(m[1],16);return[(n>>16&255)/255,(n>>8&255)/255,(n&255)/255];}
+function draw(){
+const dpr=Math.min(window.devicePixelRatio||1,2),w=cv.clientWidth,h=cv.clientHeight;
+if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);}
+gl.viewport(0,0,cv.width,cv.height);
+const b=bg();gl.clearColor(b[0],b[1],b[2],1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+const az=cam.az*Math.PI/180,el=cam.el*Math.PI/180;
+const e=[cam.t[0]+cam.d*Math.cos(el)*Math.cos(az),cam.t[1]+cam.d*Math.cos(el)*Math.sin(az),cam.t[2]+cam.d*Math.sin(el)];
+gl.uniformMatrix4fv(loc.P,false,persp(0.62,cv.width/Math.max(1,cv.height),5,3000));
+gl.uniformMatrix4fv(loc.V,false,look(e,cam.t,[0,0,1]));
+const p=+$("pitch").value,r=+$("roll").value;
+const g=+$("grip").value,ww=SW*(g-TH0)*ZT,MH=mul(rx(p),rz(r));
+const M={fixed:I(),pitch:rx(p),idle:mul(rx(p),rz(-r)),A:rx(p+r),B:rx(p-r),roll:MH,worm:mul(MH,rz(ww))};
+parts.forEach(q=>{if(!vis[q.k])return;const mm=q.g==="finger"?mul(MH,mul(tr(q.pv),mul(rax(q.ax,g-TH0),tr([-q.pv[0],-q.pv[1],-q.pv[2]])))):M[q.g];gl.uniformMatrix4fv(loc.M,false,mm);gl.uniform1f(loc.S,q.m==null?0.15:q.m);gl.uniform3fv(loc.C,q.c);gl.bindBuffer(gl.ARRAY_BUFFER,q.buf);gl.vertexAttribPointer(loc.a,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(loc.n,3,gl.FLOAT,false,24,12);gl.drawArrays(gl.TRIANGLES,0,q.cnt);});
+}
+function ui(){const p=+$("pitch").value,r=+$("roll").value;$("pv").textContent=p+"°";$("rv").textContent=r+"°";const g=+$("grip").value;const fa=g-CANT;$("gv").textContent=(fa>0?"+":"")+fa+"°";$("mot").textContent="Bevel A: "+(p+r)+"°, bevel B: "+(p-r)+"° (the NEMA17s turn ×4.86; two AS5600 read the pitch on the axle and the roll on the roll shaft). Same direction = pitch, opposite = roll. Fingers at "+(g-CANT)+"° from vertical (0 = parallel, "+(TMIN-CANT)+" = tips touching, +"+(TMAX-CANT)+" = fully open), worm turns from fully open: "+((TMAX-g)*ZT/360).toFixed(2)+". Finger limit switch: "+(g>=SWON?"PRESSED (fingers fully open)":"free")+".";dirty=1;}
+$("pitch").addEventListener("input",ui);$("grip").addEventListener("input",ui);$("roll").addEventListener("input",ui);
+[["bones","Ulna and radius"],["belts","Belts and tensioners"],["motors","Motors and screws"],["hand","Hand"],["flange","Flange and XIAO camera"],["cables","Cables"],["apple","Ø80 mm apple"]].forEach(a=>{
+const l=document.createElement("label"),c=document.createElement("input");c.type="checkbox";c.checked=a[0]!=="apple";
+c.addEventListener("change",()=>{vis[a[0]]=c.checked;if(a[0]==="apple"){const gs=$("grip");gs.min=c.checked?THC:TMIN;if(+gs.value<+gs.min)gs.value=gs.min;ui();}dirty=1;});l.appendChild(c);l.appendChild(document.createTextNode(a[1]));$("chips").appendChild(l);});
+function setView(v){cam.az=VIEWS[v][0];cam.el=VIEWS[v][1];dirty=1;}
+document.querySelectorAll("button[data-v]").forEach(bt=>bt.addEventListener("click",()=>{
+const v=bt.getAttribute("data-v");
+if(v==="reset"){$("pitch").value=0;$("roll").value=0;$("grip").value=TH0;cam.d=760;cam.t=[0,0,70];setView("iso");ui();}else setView(v);}));
+const ptr=new Map();let last=0;
+function pdist(){if(ptr.size<2)return 0;const a=[...ptr.values()];return Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);}
+cv.addEventListener("pointerdown",e=>{cv.setPointerCapture(e.pointerId);ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});last=pdist();});
+cv.addEventListener("pointermove",e=>{const o=ptr.get(e.pointerId);if(!o)return;const dx=e.clientX-o.x,dy=e.clientY-o.y;o.x=e.clientX;o.y=e.clientY;
+if(ptr.size===2){const d=pdist();if(last)cam.d=clamp(cam.d*last/d,80,1200);last=d;}
+else if(e.shiftKey||e.buttons===2){const az=cam.az*Math.PI/180,k=cam.d*0.0016;cam.t[0]+=Math.sin(az)*dx*k;cam.t[1]-=Math.cos(az)*dx*k;cam.t[2]+=dy*k;}
+else{cam.az-=dx*0.4;cam.el=clamp(cam.el+dy*0.4,-89,89);}
+dirty=1;});
+["pointerup","pointercancel"].forEach(t=>cv.addEventListener(t,e=>{ptr.delete(e.pointerId);last=pdist();}));
+cv.addEventListener("wheel",e=>{e.preventDefault();cam.d=clamp(cam.d*Math.exp(e.deltaY*0.001),80,1200);dirty=1;},{passive:false});
+cv.addEventListener("contextmenu",e=>e.preventDefault());
+window.addEventListener("resize",()=>{dirty=1;});
+if(window.matchMedia)window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{dirty=1;});
+ui();
+(function loop(){if(dirty){dirty=0;draw();}requestAnimationFrame(loop);})();
+})();
+</script></body></html>

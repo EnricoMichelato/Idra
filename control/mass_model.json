@@ -1,0 +1,312 @@
+{
+ "source": "arm v0.28 / wrist v1.24",
+ "units": "kg, m, kg m2; com and inertia in the link frame, inertia about the com",
+ "links": {
+  "1": {
+   "mass": 2.6601,
+   "com": [
+    0.00534,
+    -0.00174,
+    -0.01742
+   ],
+   "inertia": [
+    [
+     0.004848,
+     0.0001027,
+     -0.0002175
+    ],
+    [
+     0.0001027,
+     0.006854,
+     -0.0001741
+    ],
+    [
+     -0.0002175,
+     -0.0001741,
+     0.006397
+    ]
+   ],
+   "heaviest": [
+    [
+     "yaw_shoulder_gearbox_planetary_20",
+     1100
+    ],
+    [
+     "yaw_motor_shoulder_NEMA23",
+     700
+    ],
+    [
+     "yaw_shoulder_pedestal",
+     357
+    ],
+    [
+     "yaw_turntable",
+     299
+    ],
+    [
+     "yaw_ring_gear_100T",
+     63
+    ],
+    [
+     "yaw_balancer_spring_steel",
+     56
+    ]
+   ]
+  },
+  "2": {
+   "mass": 2.9671,
+   "com": [
+    0.00536,
+    -0.00032,
+    0.11816
+   ],
+   "inertia": [
+    [
+     0.0156,
+     1.093e-06,
+     0.001937
+    ],
+    [
+     1.093e-06,
+     0.02135,
+     -1.312e-05
+    ],
+    [
+     0.001937,
+     -1.312e-05,
+     0.007944
+    ]
+   ],
+   "heaviest": [
+    [
+     "elbow_side_A_30T_160T",
+     360
+    ],
+    [
+     "elbow_side_B_30T_160T",
+     360
+    ],
+    [
+     "arm_gearbox_elbow_A_planetary_5",
+     300
+    ],
+    [
+     "arm_gearbox_elbow_B_planetary_5",
+     300
+    ],
+    [
+     "arm_humerus_R",
+     296
+    ],
+    [
+     "arm_motor_elbow_A_NEMA17",
+     280
+    ]
+   ]
+  },
+  "3": {
+   "mass": 0.5779,
+   "com": [
+    -1e-05,
+    -3e-05,
+    0.03296
+   ],
+   "inertia": [
+    [
+     0.0009577,
+     1.111e-10,
+     -1.241e-07
+    ],
+    [
+     1.111e-10,
+     0.001993,
+     -4.283e-07
+    ],
+    [
+     -1.241e-07,
+     -4.283e-07,
+     0.001388
+    ]
+   ],
+   "heaviest": [
+    [
+     "cradle_carrier",
+     265
+    ],
+    [
+     "cradle_pin_steel",
+     148
+    ],
+    [
+     "cradle_brg_forearm_6810",
+     52
+    ],
+    [
+     "cradle_spider",
+     37
+    ],
+    [
+     "cradle_brg_hub_low_6806",
+     26
+    ],
+    [
+     "idle_satellite_15T",
+     16
+    ]
+   ]
+  },
+  "4": {
+   "mass": 1.2175,
+   "com": [
+    0.00019,
+    0.00031,
+    0.14563
+   ],
+   "inertia": [
+    [
+     0.003561,
+     4.624e-07,
+     -3.201e-05
+    ],
+    [
+     4.624e-07,
+     0.005267,
+     1.577e-07
+    ],
+    [
+     -3.201e-05,
+     1.577e-07,
+     0.002179
+    ]
+   ],
+   "heaviest": [
+    [
+     "W_motor_A_NEMA17",
+     280
+    ],
+    [
+     "W_motor_B_NEMA17",
+     280
+    ],
+    [
+     "W_radius",
+     125
+    ],
+    [
+     "W_ulna",
+     122
+    ],
+    [
+     "W_gear_A_pulley_one_piece",
+     64
+    ],
+    [
+     "W_gear_B_pulley_one_piece",
+     64
+    ]
+   ]
+  },
+  "5": {
+   "mass": 0.3771,
+   "com": [
+    -0.0001,
+    -1e-05,
+    0.01979
+   ],
+   "inertia": [
+    [
+     0.0002683,
+     2.192e-08,
+     -3.633e-06
+    ],
+    [
+     2.192e-08,
+     0.0007364,
+     -2.553e-08
+    ],
+    [
+     -3.633e-06,
+     -2.553e-08,
+     0.0006024
+    ]
+   ],
+   "heaviest": [
+    [
+     "W_pitch_axle_steel",
+     126
+    ],
+    [
+     "W_carrier_flange",
+     97
+    ],
+    [
+     "W_brg_ring_6810",
+     51
+    ],
+    [
+     "W_T_fitting",
+     14
+    ],
+    [
+     "W_ferrite_TX",
+     13
+    ],
+    [
+     "W_idle_gear_D_24T",
+     11
+    ]
+   ]
+  },
+  "6": {
+   "mass": 0.3908,
+   "com": [
+    0.0002,
+    7e-05,
+    0.10066
+   ],
+   "inertia": [
+    [
+     0.001023,
+     -5.821e-07,
+     6.684e-07
+    ],
+    [
+     -5.821e-07,
+     0.001024,
+     5.906e-07
+    ],
+    [
+     6.684e-07,
+     5.906e-07,
+     0.0001443
+    ]
+   ],
+   "heaviest": [
+    [
+     "W_hand_gearmotor_25mm",
+     91
+    ],
+    [
+     "W_roll_shaft_steel_12",
+     55
+    ],
+    [
+     "W_hand_body",
+     49
+    ],
+    [
+     "W_hand_worm",
+     38
+    ],
+    [
+     "W_hand_shaft_hub_alu",
+     30
+    ],
+    [
+     "W_hand_head",
+     22
+    ]
+   ]
+  }
+ }
+}
