@@ -1,4 +1,4 @@
-# Arm v0.31 (exposed-mechanics style): shoulder, elbow, wrist, base and electronics
+# Arm v0.32 (exposed-mechanics style): shoulder, elbow, wrist, base and electronics
 
 ## Architecture (6 axes)
 1. **Base (yaw):** a 100-tooth internal ring gear (module 1.5) under the Ø230 turntable and a 15-tooth pinion on a NEMA17 with a 5:1 high-precision planetary gearbox, fixed under the deck: 33.3:1 in total. Yaw is limited to ±170°.
@@ -46,7 +46,9 @@
      - The satellite heel has one dot towards B and two dots towards A.
      - Assemble with matching marks facing each other, elbow straight and pronation centred.
    - **Cradle:**
-     - It sits outside the bones, with 10 mm walls (R26 ears that wrap the bone head where the bearing is) and a 16 mm plate.
+     - It sits **inside** the bones (the bones are the outermost parts, like an exoskeleton): two 7.5 mm walls between the big pulleys and the bones, and a 26 mm plate between the walls.
+     - **Lightened plate:** four through pockets between the ring around the bearings and the outer frame, with a rib on the axis tying the ring to each wall (about 97 g instead of 141 g).
+     - **Three pieces, each printed flat:** the plate (bearing seats as true circles) and two walls (shaft bore as a true circle). Each wall is fixed to the side of the plate with 4 countersunk M3 into heat-set inserts.
      - It is 84 mm wide, so it covers the whole forearm base (Ø80).
      - The plate holds a 6806 at the bottom, around the satellite hub, and a 61810 (50 × 65 × 7) at the top.
    - **Forearm base:** the base plate sits directly on the 61810 and has a hexagonal pocket that takes the hex end of the bevel hub (25 mm across flats): the pronation torque goes through the hex, and 3 × M3 into heat-set inserts in the hub end hold it down. There is no tube. Ulna and radius flank the two ends of the base plate and are screwed to it with 4 × M3 each, into heat-set inserts in its sides. They are 176 mm long. Each has a cover on its outer edge, in front of the wrist motors (torsion box).
@@ -59,7 +61,7 @@
      - **Layout:** each belt has two smooth Ø12 flanged idlers, one per strand, outside the loop.
      - **Effect:** they press on the back of the belt and push the strand inwards by about 6 mm. The belt wraps more of the 16-tooth pulley: 163° instead of 142°, about 7 teeth engaged instead of 6.
      - **Adjustment:** each idler turns on an M5 screw in a slot in the bone (±3 mm). Push the idler against the belt and tighten the flange nut on the outer face. There are no sliders or holders any more.
-     - **Why not slotted motors:** each motor shaft ends in a 625 bearing in the bone, which carries the belt pull, so the motor cannot slide.
+     - **Why not slotted motors:** each motor shaft ends in a 688 bearing, in a printed block screwed to the inner face of the bone (2 M3), which carries the belt pull into the bone, so the motor cannot slide.
      - **Range:** the travel takes up −1.1 to +1.9 mm of belt length.
    - **Motion:** motors turning the same way give flexion; opposite ways give pronation (1:1 in the bevels, so side gear angle = pronation/2).
    - **Range:** elbow −60° to +105°, pronation about ±180° (limited by the cables).
@@ -75,7 +77,7 @@
        - 1:1 with pronation: absolute angle over ±180°;
        - it needs a small custom PCB, because common AS5600 modules (about 23 mm) do not fit.
      - **Wrist cables:** they pass beside the spider, at the front, and enter the Ø20 bore of the forearm satellite. The route needs checking with real cables.
-4. **Wrist (v1.14, 76 mm flange that covers the Ø70 hand, R22 ears around the ulna and radius heads):** differential and endless roll with an inductive link. The wrist motors sit near the elbow (170-tooth belts, 4.86:1), so there is less weight at the tip.
+4. **Wrist (v1.14, 76 mm flange that covers the Ø70 hand, R22 ears around the ulna and radius heads):** differential and endless roll with an inductive link. The wrist motors sit near the elbow (170-tooth belts, 14-tooth motor pulleys, 5.57:1), so there is less weight at the tip.
    - **Adjustable tensioner, one per belt:**
      - **Layout:** a smooth Ø12 idler presses on the back of the front strand, outside the loop, 92 mm below the wrist axis.
      - **Adjustment:** it turns on an M5 in a slot in the bone (±2.5 mm), locked by a flange nut on the outer face.
@@ -87,6 +89,7 @@
      - everything ends flush with the heel, with less than 1 mm of lip;
      - the tooth load halves and the thrusts balance;
      - D's hub is closed.
+   - **Flange inside the bones, in three pieces:** as at the elbow, a plate and two 8 mm walls printed flat, 3 countersunk M3 per wall. Ulna and radius are outside the walls (141 mm over the bones). Each wrist motor shaft ends in a 625 in a printed block screwed to the inner face of its bone.
    - **Axle fixed to the flange:** the Ø12 axle is clamped in the flange walls with M3 grub screws and turns in one 6801 per bone, as at the elbow. The T fitting is keyed to the axle with an M3 grub screw.
    - **Side gear preload:** identical to the elbow. A Ø15 × 0.8 shim sits on the inner ring of the pulley-side 6801, and a 12 × 18 wave spring presses on the inner ring of the bone 6801. A spacer carries the thrust to the flange wall.
    - **Encoders (2 × AS5600):**
@@ -99,10 +102,9 @@
        - it measures the hand directly, not through the idler bevel;
        - absolute angle within one turn; the firmware counts turns, because the roll is endless.
    - **Improved inductive link:**
-     - **Ferrite cups:** each coil sits in a ferrite cup, with a 1.5 mm bottom plus inner and outer rims flush with the coil face, like the two halves of a pot core. The field stays closed between the cups: more coupling and less leakage towards metal parts.
-     - **Sizes:** ferrite outer diameter 44 mm, inner 15 mm. Litz coils 40/18 × 2 mm, 1 mm air gap.
+     - **PCB coils (since wrist v1.29):** each coil is a 4-layer ring board, Ø43.6 / Ø15.6 × 1.6 mm (`electronics/coil_pcb/`), backed by two rings of 0.3 mm flexible ferrite sheet, in a 2.4 mm pocket. 1 mm air gap between the two boards. They replace the Litz coils in ferrite cups of the earlier versions: a cup of that size with a hole for the shaft is not a catalogue part.
      - **Height:** the coils are 3 mm above the 6810 bearing, so the steel bearing stays out of the field. The hand rises by 3 mm.
-     - **TX driver:** a 30 × 20 board on the flange, opposite the camera, with 2 M3 inserts. The coil leads are short and pass through a hole next to the seat.
+     - **TX driver:** a 30 × 20 board on the flange, opposite the camera, with 2 M3 inserts. The coil leads are short and pass through two holes under the pads of the coil board.
    - **Roll shaft:** a Ø12 × 48 metal shaft; it used to be printed. Use **non-magnetic** material (304 stainless or 7075 aluminium), because the encoder magnet sits in its end. It needs two 2 mm flats: one under bevel C (D-shaped bore, slides on) and a 6 mm one at the hand end (D-shaped bore, epoxied).
    - **Passive hand (wrist v1.23 / hand v2.3):** there is no microcontroller in the hand any more.
      - **Flange side:** the camera's XIAO drives the TX bridge (IR2104 + 2 MOSFETs) and reads its current through a shunt and an INA180.
@@ -111,6 +113,27 @@
      - **End of travel:** the NC limit switch is in series with IN2 and stops the opening by itself. A grasp is detected by the stall, that is by the current rising on the TX side.
      - **Wiring:** the cable from the flange to the camera goes from 2 to 5 wires (5 V, ground, PWM, enable, current), in the same groove.
      - **Details:** schematic, values and bench test in `electronics/hand_passive.md`.
+
+## Wrist v1.29: PCB coils
+- **Coils on printed circuit boards:** 4-layer ring boards Ø43.6 / Ø15.6 × 1.6 mm (`electronics/coil_pcb.py`: TX20, RX24, spare RX28), each backed by two rings of 0.3 mm flexible ferrite sheet. They replace the hand-wound Litz coils in ferrite cups: a cup of that size with a hole for the shaft is not a catalogue part, and boards are the same every time.
+- **Pockets** in the flange boss and the hand bottom are now 2.4 mm deep (were 3.5); the coil faces stay 1 mm apart and 3 mm above the 6810.
+- **Leads:** two holes under the two pads of each board (TX towards the driver, RX into the hand) instead of one.
+- **Checks** moved into the repository (`tools/checks/`), and `STATUS.md` added as the handoff document.
+
+## Hand v2.6
+- **13.5 mm shorter**, same motor and grip: hub upside down with its neck in a 12 mm bottom, worm thread cut to 16 mm, no washer under the worm hub. Wrist centre to grip centre is now 205.4 mm.
+
+## Hand v2.5
+- **Finger supports:** one turret with three wheel slots and hollow pillars (9 mm cheeks) replaces the six free-standing cheeks.
+- **Palm:** a dome screwed into the cheek tops with 6 M3; plugs under it hold the Ø5 × 32 finger pins (no e-clips). Same height as before.
+
+## Exoskeleton pass (arm v0.32, wrist v1.27)
+- **Cradle and wrist flange inside the bones:** the bones are now the outermost parts at both joints. Elbow: 143 mm over the bones, where the cradle was 168 mm wide. Wrist: 141 mm over the bones.
+- **Both flanges in three flat-printed pieces** (plate + two walls), so every bearing seat and shaft bore prints as a true circle in the layer plane.
+- **Elbow shaft** Ø12 × 145 (was 168). The preload shim and wave spring now sit inside the bore of the big pulley, so the wall can run 1 mm from it.
+- **Motor shafts stay supported in the bones:** bearing blocks on the inner face of each bone (688 at the elbow, 625 at the wrist).
+- **Elbow belt planes** 50 mm from the centre (were 51.5); gearbox wall of the carrier 4 mm; the four elbow idler bolts are button-head M5 so they pass the end of the opposite motor (0.75 mm).
+- **Checked:** no interference in 5 poses over the joint ranges, cables excluded.
 
 ## Stiffness pass (v0.30)
 - **Goal:** 500 g payload and less sag. Numbers in `control/stiffness_report.md` and `control/dynamics_report.md`.

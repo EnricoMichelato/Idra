@@ -18,10 +18,10 @@ Conventions (identical to the 3D viewer and the arm_v0 / wrist_v0 CAD):
 """
 import numpy as np
 
-# --- dimensions from the CAD (arm v0.31 / wrist v1.26 / hand v2.4) ---------
+# --- dimensions from the CAD (arm v0.32 / wrist v1.29 / hand v2.6) ---------
 LU = 205.0          # shoulder -> elbow
 LF = 240.0          # elbow -> wrist centre
-D6 = 215.8          # wrist centre -> grip centre (fingertips at ~238)
+D6 = 205.4          # wrist centre -> grip centre (fingertips at ~228)
 SHOULDER_H = 183.0  # shoulder axis above the desk
 
 # --- transmissions ----------------------------------------------------------
@@ -29,7 +29,7 @@ R_YAW = 100 / 15 * 5    # base: 5:1 planetary on the motor, then 100-tooth ring 
 R_SH = 20.0             # shoulder: 20:1 steel planetary on the NEMA23
 R_EL = 5 * 160 / 20     # elbow: 5:1 planetary on each motor, then 160/20 belts on the side bevels
 KP_EL = 0.5             # elbow: 30/15 bevels -> half a side-gear turn per satellite turn
-R_WR = 78 / 16          # wrist: 78/16 belts, 1:1 bevels
+R_WR = 78 / 14          # wrist: 78/14 belts, 1:1 bevels
 STEPS_REV = 200 * 16    # steps per turn with 16 microsteps
 
 LIMITS = {  # degrees (q6 endless)

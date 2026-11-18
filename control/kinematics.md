@@ -14,7 +14,7 @@
 | q5 wrist pitch | Rx(q5) | ±90 |
 | q6 roll | Rz(q6) | endless |
 
-Dimensions: Lu 205, Lf 240, d6 215.8 (from the wrist centre to the grip centre; the fingertips are at about 238).
+Dimensions: Lu 205, Lf 240, d6 205.4 (from the wrist centre to the grip centre; the fingertips are at about 228).
 
 ## Forward kinematics
 T = Rz(q1)·Rx(−q2)·Tz(Lu)·Rx(−q3)·Rz(q4)·Tz(Lf)·Rx(q5)·Rz(q6)·Tz(d6)
@@ -47,8 +47,8 @@ The wrist is spherical (the axes of q4, q5 and q6 meet at the wrist centre), so:
 | Shoulder | 20·q2 | 177.78 |
 | Elbow A | 40·(−q3 + q4/2) | 355.56 |
 | Elbow B | 40·(−q3 − q4/2) | 355.56 |
-| Wrist A | 4.875·(q5 + q6) | 43.33 |
-| Wrist B | 4.875·(q5 − q6) | 43.33 |
+| Wrist A | 5.571·(q5 + q6) | 49.52 |
+| Wrist B | 5.571·(q5 − q6) | 49.52 |
 
 The real direction of each motor is set once in the firmware (DIR pin) at homing.
 

@@ -17,7 +17,7 @@ The DRV8871 current limit (R_ILIM) sets the force. Worm friction 0.15 is steel o
 
 ## Other numbers
 
-- **Worm axial load:** 188 N, pushing the worm **up**, away from the motor. It goes into the F6-12M thrust ball bearing of the palm cap, not into the gearmotor.
+- **Worm axial load:** 188 N, pushing the worm **up**, away from the motor. It goes into the F6-12M thrust ball bearing of the palm dome, not into the gearmotor.
 - **Worm efficiency:** 29%. The lead angle is 3.6°, so the worm cannot be back-driven for any friction above 0.06; the 75:1 gearbox adds to that. The grip holds with the power off.
 - **Speed:** 100 rpm at the worm, 21°/s at the fingers. Fully open to an 80 mm object: 1.6 s. Fully open to tips touching: 3.2 s (5.4 worm turns).
 - **Power through the coils:** about 9 W for the fraction of a second at stall, 2–4 W while closing. The link has to deliver this: check it on the bench with a 15 Ω load.

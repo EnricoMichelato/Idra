@@ -84,7 +84,7 @@ table.spec td:last-child{font-family:var(--f-mono);font-size:12px}
 @media (max-width:560px){.bar h1{font-size:34px}.kc{width:46px;height:46px}.kc.wide{width:64px}.kc i{font-size:9px}.bar .ver{margin-left:0;text-align:left}}
 @media (prefers-reduced-motion:reduce){.kc{transition:none}.cap{transition:none}}
 </style></head><body><main>
-<header class="bar"><h1>ID<b>R</b>A</h1><span class="sub">Infinite Differential Roll Arm</span><span class="ver">arm v0.31 · wrist v1.26 · hand v2.4<br>design model, not built yet</span></header>
+<header class="bar"><h1>ID<b>R</b>A</h1><span class="sub">Infinite Differential Roll Arm</span><span class="ver">arm v0.32 · wrist v1.29 · hand v2.6<br>design model, not built yet</span></header>
 <!--SITE_NAV-->
 <!--SITE_HERO-->
 <div id="stage"><canvas id="cv"></canvas><div class="cap" id="cap"></div><div class="hint" id="hint">Drag to orbit · scroll or pinch to zoom · Shift or right button to pan</div>
@@ -142,8 +142,8 @@ if(!gl){cv.insertAdjacentHTML("afterend","<p style=\"padding:12px\">WebGL is not
 function dec(s){const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u.buffer;}
 function sh(t,src){const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);return s;}
 const pr=gl.createProgram();
-gl.attachShader(pr,sh(gl.VERTEX_SHADER,"attribute vec3 a;attribute vec3 nn;uniform mat4 uP,uV,uM;varying vec3 vN,vP;void main(){vec4 p=uV*uM*vec4(a,1.);gl_Position=uP*p;vP=p.xyz;vN=(uV*uM*vec4(nn,0.)).xyz;}"));
-gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,"precision mediump float;varying vec3 vN,vP;uniform vec3 uC;uniform float uS;void main(){vec3 N=normalize(vN);if(N.z<0.)N=-N;vec3 L=normalize(vec3(.35,.5,.8));float l=.30+.70*abs(dot(N,L));vec3 H=normalize(L+normalize(-vP));float sp=pow(max(dot(N,H),0.),28.)*(.10+.55*uS);float rim=pow(1.-max(dot(N,normalize(-vP)),0.),3.)*.10;gl_FragColor=vec4(uC*l+vec3(sp+rim),1.);}"));
+gl.attachShader(pr,sh(gl.VERTEX_SHADER,"attribute vec3 a;attribute vec3 nn;uniform mat4 uP,uV,uM;varying vec3 vN,vP;void main(){vec4 p=uV*uM*vec4(a,1.);gl_Position=uP*p;vP=p.xyz*.001;vN=(uV*uM*vec4(nn,0.)).xyz;}"));
+gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,"#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\nvarying vec3 vN,vP;uniform vec3 uC;uniform float uS;void main(){vec3 N=normalize(vN);if(N.z<0.)N=-N;vec3 L=normalize(vec3(.35,.5,.8));float l=.30+.70*abs(dot(N,L));vec3 H=normalize(L+normalize(-vP));float sp=pow(max(dot(N,H),0.),28.)*(.10+.55*uS);float rim=pow(1.-max(dot(N,normalize(-vP)),0.),3.)*.10;gl_FragColor=vec4(uC*l+vec3(sp+rim),1.);}"));
 gl.linkProgram(pr);gl.useProgram(pr);
 const loc={a:gl.getAttribLocation(pr,"a"),n:gl.getAttribLocation(pr,"nn"),P:gl.getUniformLocation(pr,"uP"),V:gl.getUniformLocation(pr,"uV"),M:gl.getUniformLocation(pr,"uM"),C:gl.getUniformLocation(pr,"uC"),S:gl.getUniformLocation(pr,"uS")};
 gl.enableVertexAttribArray(loc.a);gl.enableVertexAttribArray(loc.n);gl.enable(gl.DEPTH_TEST);
@@ -210,7 +210,7 @@ const KF=[[0,0,0,0,0,0,0,46],[2.5,-50,30.16,69.09,0,-80.75,0,72],[4,-50,37.3,79.
 [23,0,10,70,0,-10,900,20,"lin"],[25,0,10,70,0,-10,1260,75,"lin"],[27,0,10,70,0,-10,1620,20,"lin"],[29,0,10,70,0,-10,1980,75,"lin"],
 [31,0,10,70,0,-10,2160,46,"out"],[34.5,0,10,70,150,-50,2520,46],[38.5,0,10,70,-150,-50,2160,46],[40.5,0,10,70,0,-10,2160,46],[43,0,0,0,0,0,2160,46]];
 const CAPS=[[0,"Grasp: the arm reaches down to the apple and the Fin Ray fingers close"],[6.5,"Carry: forearm pronation and a full wrist turn with the apple"],
-[13.5,"Place and release"],[16,"Moving into position for the demo"],[19,"Endless wrist roll: the hand is powered by induction, with no cable to twist"],
+[13.5,"Place and release"],[16,"Moving into position for the demo"],[19,"Endless wrist roll: the hand turns without limit"],
 [31,"Differential elbow: ±150° pronation while the wrist stays free to spin"],[40.5,"Back to the start pose"]];
 const TG=5,TR=13.6,TEND=KF[KF.length-1][0];
 // camera keys [t, az, el, dist, target x, y, z]; dropped as soon as the viewer drags or zooms

@@ -23,7 +23,7 @@ input[type=range]{flex:1;min-width:140px;accent-color:var(--ac)}
 button{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:6px 12px}
 .mot{color:var(--mut);font-size:13px}
 </style></head><body><main>
-<h1>Robot wrist and hand (draft v1.23, passive hand)</h1>
+<h1>Robot wrist and hand (wrist v1.29, hand v2.6)</h1>
 <div id="stage"><canvas id="cv"></canvas><div class="hint">Drag to orbit, pinch or scroll to zoom, Shift or right button to pan.</div></div>
 <div class="panel">
 <div class="row"><label class="l" for="pitch">Pitch</label><input id="pitch" type="range" min="-90" max="90" value="0" step="1"><span class="val" id="pv">0°</span></div>
@@ -42,8 +42,8 @@ if(!gl){cv.insertAdjacentHTML("afterend","<p style=\"padding:12px\">WebGL is not
 function dec(s){const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u.buffer;}
 function sh(t,src){const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);return s;}
 const pr=gl.createProgram();
-gl.attachShader(pr,sh(gl.VERTEX_SHADER,"attribute vec3 a;attribute vec3 nn;uniform mat4 uP,uV,uM;varying vec3 vN,vP;void main(){vec4 p=uV*uM*vec4(a,1.);gl_Position=uP*p;vP=p.xyz;vN=(uV*uM*vec4(nn,0.)).xyz;}"));
-gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,"precision mediump float;varying vec3 vN,vP;uniform vec3 uC;uniform float uS;void main(){vec3 N=normalize(vN);float l=.36+.64*abs(dot(N,normalize(vec3(.35,.5,.8))));gl_FragColor=vec4(uC*l,1.);}"));
+gl.attachShader(pr,sh(gl.VERTEX_SHADER,"attribute vec3 a;attribute vec3 nn;uniform mat4 uP,uV,uM;varying vec3 vN,vP;void main(){vec4 p=uV*uM*vec4(a,1.);gl_Position=uP*p;vP=p.xyz*.001;vN=(uV*uM*vec4(nn,0.)).xyz;}"));
+gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,"#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\nvarying vec3 vN,vP;uniform vec3 uC;uniform float uS;void main(){vec3 N=normalize(vN);float l=.36+.64*abs(dot(N,normalize(vec3(.35,.5,.8))));gl_FragColor=vec4(uC*l,1.);}"));
 gl.linkProgram(pr);gl.useProgram(pr);
 const loc={a:gl.getAttribLocation(pr,"a"),n:gl.getAttribLocation(pr,"nn"),P:gl.getUniformLocation(pr,"uP"),V:gl.getUniformLocation(pr,"uV"),M:gl.getUniformLocation(pr,"uM"),C:gl.getUniformLocation(pr,"uC"),S:gl.getUniformLocation(pr,"uS")};
 gl.enableVertexAttribArray(loc.a);gl.enableVertexAttribArray(loc.n);gl.enable(gl.DEPTH_TEST);
@@ -87,7 +87,7 @@ const g=+$("grip").value,ww=SW*(g-TH0)*ZT,MH=mul(rx(p),rz(r));
 const M={fixed:I(),pitch:rx(p),idle:mul(rx(p),rz(-r)),A:rx(p+r),B:rx(p-r),roll:MH,worm:mul(MH,rz(ww))};
 parts.forEach(q=>{if(!vis[q.k])return;const mm=q.g==="finger"?mul(MH,mul(tr(q.pv),mul(rax(q.ax,g-TH0),tr([-q.pv[0],-q.pv[1],-q.pv[2]])))):M[q.g];gl.uniformMatrix4fv(loc.M,false,mm);gl.uniform1f(loc.S,q.m==null?0.15:q.m);gl.uniform3fv(loc.C,q.c);gl.bindBuffer(gl.ARRAY_BUFFER,q.buf);gl.vertexAttribPointer(loc.a,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(loc.n,3,gl.FLOAT,false,24,12);gl.drawArrays(gl.TRIANGLES,0,q.cnt);});
 }
-function ui(){const p=+$("pitch").value,r=+$("roll").value;$("pv").textContent=p+"°";$("rv").textContent=r+"°";const g=+$("grip").value;const fa=g-CANT;$("gv").textContent=(fa>0?"+":"")+fa+"°";$("mot").textContent="Bevel A: "+(p+r)+"°, bevel B: "+(p-r)+"° (the NEMA17s turn ×4.86; two AS5600 read the pitch on the axle and the roll on the roll shaft). Same direction = pitch, opposite = roll. Fingers at "+(g-CANT)+"° from vertical (0 = parallel, "+(TMIN-CANT)+" = tips touching, +"+(TMAX-CANT)+" = fully open), worm turns from fully open: "+((TMAX-g)*ZT/360).toFixed(2)+". Finger limit switch: "+(g>=SWON?"PRESSED (fingers fully open)":"free")+".";dirty=1;}
+function ui(){const p=+$("pitch").value,r=+$("roll").value;$("pv").textContent=p+"°";$("rv").textContent=r+"°";const g=+$("grip").value;const fa=g-CANT;$("gv").textContent=(fa>0?"+":"")+fa+"°";$("mot").textContent="Bevel A: "+(p+r)+"°, bevel B: "+(p-r)+"° (the NEMA17s turn ×5.57; two AS5600 read the pitch on the axle and the roll on the roll shaft). Same direction = pitch, opposite = roll. Fingers at "+(g-CANT)+"° from vertical (0 = parallel, "+(TMIN-CANT)+" = tips touching, +"+(TMAX-CANT)+" = fully open), worm turns from fully open: "+((TMAX-g)*ZT/360).toFixed(2)+". Finger limit switch: "+(g>=SWON?"PRESSED (fingers fully open)":"free")+".";dirty=1;}
 $("pitch").addEventListener("input",ui);$("grip").addEventListener("input",ui);$("roll").addEventListener("input",ui);
 [["bones","Ulna and radius"],["belts","Belts and tensioners"],["motors","Motors and screws"],["hand","Hand"],["flange","Flange and XIAO camera"],["cables","Cables"],["apple","Ø80 mm apple"]].forEach(a=>{
 const l=document.createElement("label"),c=document.createElement("input");c.type="checkbox";c.checked=a[0]!=="apple";

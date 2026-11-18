@@ -1,0 +1,21 @@
+Copyright (c) 2026 Enrico Michelato. All rights reserved.
+
+This repository (IDRA: Infinite Differential Roll Arm) contains source code, CAD
+scripts, generated models, drawings, schematics, documentation and web pages
+(together, "the Work").
+
+No licence is granted. Except as allowed by applicable law or by the terms of
+service of the platform that hosts this repository (which let you view the Work
+there), you may not copy, modify, merge, publish, distribute, sublicense or
+sell the Work or any part of it, or manufacture, build or have built any device
+based on it, or use it commercially, without the prior written permission of
+the copyright holder.
+
+THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDER
+BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE WORK OR
+ITS USE.
+
+Third-party components (for example the libraries listed in requirements.txt
+and the fonts loaded by the web pages) remain under their own licences.

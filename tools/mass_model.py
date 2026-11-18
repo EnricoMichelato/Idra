@@ -24,8 +24,8 @@ def density(n):
     if n.endswith('_alu') or 'hub_alu' in n: return 2.7
     if 'brg' in n: return 5.5                     # a bearing is not a solid ring
     if m: return RHO[m]
-    if 'ferrite' in n: return 4.8
-    if 'coil' in n: return 4.5
+    if 'ferrite' in n: return 3.2                 # flexible sintered ferrite sheet with its PET film and adhesive
+    if 'coil' in n: return 3.1                    # PCB coil: FR-4 with 4 x 70 um copper
     if 'magnet' in n: return 7.5
     if 'belt' in n: return 1.2
     if 'cable' in n: return 1.6

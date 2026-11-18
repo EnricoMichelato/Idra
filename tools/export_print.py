@@ -15,7 +15,7 @@ GROUPS = [('Base', ('foot_', 'yaw_turntable', 'yaw_ring', 'yaw_spindle', 'yaw_sp
           ('Shoulder', ('yaw_',)),
           ('Upper arm', ('arm_',)),
           ('Elbow', ('cradle_', 'elbow_', 'idle_', 'forearm_')),
-          ('Forearm and wrist', ('W_ulna', 'W_radius', 'W_forearm', 'W_gear', 'W_idle', 'W_T_', 'W_carrier', 'W_camera', 'W_enc')),
+          ('Forearm and wrist', ('W_ulna', 'W_radius', 'W_forearm', 'W_gear', 'W_idle', 'W_T_', 'W_carrier', 'W_motor_block', 'W_camera', 'W_enc')),
           ('Hand', ('W_hand',))]
 SETTINGS = {'printed': 'PETG or PETG-CF, 0.2 mm, 4 perimeters, 40% gyroid',
             'gear': 'PETG (PA-CF if you can), 0.16-0.2 mm, 6 perimeters, 60-100% infill',

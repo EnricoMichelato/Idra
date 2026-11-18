@@ -31,10 +31,10 @@ def main():
          '| File (`out/laser/`) | Size | Holes | Mass (g) |', '|---|---|---|---|']
     L += [f'| `{f}` | {w} × {h} × {t} | {k} | {m} |' for f, w, h, t, k, m in rows]
     L += ['', '## After cutting', '',
-          '- **Bearing bores** (Ø21 for the 6801, Ø16 for the 625, Ø65 for the 6810): a laser leaves a slightly tapered, rough edge. Ask for the bores 0.2 mm undersize and ream or bore them, or fit the bearings with Loctite 638. The values come from `common/fit.py`, which is tuned for printed seats: for metal use the nominal diameter.',
+          '- **Bearing bores** (Ø21 for the 6801, Ø65 for the 6810): a laser leaves a slightly tapered, rough edge. Ask for the bores 0.2 mm undersize and ream or bore them, or fit the bearings with Loctite 638. The values come from `common/fit.py`, which is tuned for printed seats: for metal use the nominal diameter.',
           '- **Tapped holes:** 4 × M5 around the shoulder shaft hole of the right humerus and 1 × M5 in the lobe of the left humerus for the balancer cable (Ø4.2 cut), and the two M3 for each encoder bracket (Ø2.5 cut) on the right humerus and on the radius.',
           '- **Slots:** the M5 slots of the belt idlers are cut as they are.',
-          '- **Deburr** both faces: the covers and the cradle slide close to them.',
+          '- **Deburr** both faces: the covers sit on them and the cradle walls turn 1 mm from the inner face.',
           '- Left and right are different parts, but each is flat: there is no "up" face.', '']
     open(os.path.join(ROOT, 'mechanical/cad/LASER_CUT.md'), 'w').write('\n'.join(L))
 

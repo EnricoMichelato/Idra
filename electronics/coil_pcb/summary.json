@@ -1,0 +1,62 @@
+{
+ "idra_coil_TX20": {
+  "label": "TX20",
+  "turns": 19.89,
+  "per_pair": 10,
+  "pitch": 1.005,
+  "track": 0.755,
+  "gap": 0.25,
+  "length_m": 1.821,
+  "r_dc": 0.296,
+  "r_dc_inner_1oz": 0.395,
+  "L_air_uH": 14.6,
+  "checks": {
+   "pair_A_gap": 0.25,
+   "pair_B_gap": 0.249,
+   "pad_A_to_other_pair": 1.245,
+   "pad_B_to_other_pair": 1.133,
+   "pad_to_edge": 0.35,
+   "mid_via_to_edge": 0.45
+  }
+ },
+ "idra_coil_RX24": {
+  "label": "RX24",
+  "turns": 23.89,
+  "per_pair": 12,
+  "pitch": 0.85,
+  "track": 0.6,
+  "gap": 0.25,
+  "length_m": 2.188,
+  "r_dc": 0.448,
+  "r_dc_inner_1oz": 0.597,
+  "L_air_uH": 20.9,
+  "checks": {
+   "pair_A_gap": 0.25,
+   "pair_B_gap": 0.249,
+   "pad_A_to_other_pair": 1.092,
+   "pad_B_to_other_pair": 0.998,
+   "pad_to_edge": 0.35,
+   "mid_via_to_edge": 0.45
+  }
+ },
+ "idra_coil_RX28": {
+  "label": "RX28",
+  "turns": 27.89,
+  "per_pair": 14,
+  "pitch": 0.737,
+  "track": 0.487,
+  "gap": 0.25,
+  "length_m": 2.555,
+  "r_dc": 0.645,
+  "r_dc_inner_1oz": 0.86,
+  "L_air_uH": 28.3,
+  "checks": {
+   "pair_A_gap": 0.25,
+   "pair_B_gap": 0.249,
+   "pad_A_to_other_pair": 0.98,
+   "pad_B_to_other_pair": 0.898,
+   "pad_to_edge": 0.35,
+   "mid_via_to_edge": 0.45
+  }
+ }
+}

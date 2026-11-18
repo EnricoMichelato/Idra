@@ -73,11 +73,11 @@ At most a film of dry PTFE. Forward efficiency is about 36%.
 
 ## Bench test (before the final CAD)
 
-1. Measure the coil inductance at the real gap.
+1. Measure the inductance of the PCB coils (`coil_pcb/`) at the real 1 mm gap, with the ferrite sheet behind them.
 2. Run the TX alone at both frequencies: the MOSFETs stay warm at most, and the rectified open-circuit voltage stays below 30 V.
-3. With a 15 Ω, 10 W load (the stall current of the hand), VM stays between 10 and 15 V. Below 9 V, add turns to the RX coil.
+3. With a 15 Ω, 10 W load (the stall current of the hand), VM stays between 10 and 15 V. Below 9 V, use the `RX28` coil board (more turns).
 4. Sweep the frequency while watching IN1 and IN2: the right channel goes above 2 V and the wrong one stays at 0. Note the peak frequencies.
 5. Connect the DRV and motor: the direction follows the frequency, and the limit switch stops the opening.
 6. Log the TX-side current and derive the stall and idle thresholds.
 7. Close on an object, turn the bridge off and shake the hand: the fingers must not back off.
-8. Run 20 cycles: everything stays below 50 °C.
+8. Run 20 cycles: everything stays below 50 °C, the coil boards below 60 °C.

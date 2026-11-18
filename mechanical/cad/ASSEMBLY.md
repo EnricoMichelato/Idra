@@ -1,4 +1,4 @@
-# Assembly guide (arm v0.31, wrist v1.26, hand v2.4)
+# Assembly guide (arm v0.32, wrist v1.29, hand v2.6)
 
 Nothing in this guide has been built yet: it is the order the CAD was designed for. Where a step is a guess, it says so.
 
@@ -28,7 +28,9 @@ Nothing in this guide has been built yet: it is the order the CAD was designed f
 | Elbow motors → gearboxes → carrier | motor on its 5:1 gearbox; gearbox face on the carrier wall with 4 × M3 × 10 | before the carrier goes between the bones |
 | Motor carrier → bones | 2 × M5 × 16 through each bone into inserts in the carrier blocks | from outside the bones |
 | Covers → bones | 6 × M3 × 10 each, through the bones into inserts in the cover tabs | from outside the bones |
-| Elbow shaft → cradle | 2 × M3 grubs on a flat | from the front of the cradle |
+| Cradle walls → cradle plate, flange walls → flange plate | 4 (elbow) and 3 (wrist) countersunk M3 × 12 per wall into inserts in the plate sides | from outside the wall, before the bones go on |
+| Motor shaft blocks → bones | 2 × M3 × 10 each through the bone into inserts in the block (688 at the elbow, 625 at the wrist) | from outside the bone |
+| Elbow shaft → cradle walls | 2 × M3 grubs on a flat | from the front, through the gap between pulley and bone |
 | Spider → elbow shaft | M3 grub on a flat | before the forearm hub goes in |
 | Forearm base → bevel hub | hex 25 mm in a pocket + 3 × M3 × 8 into inserts in the hub end | from above the base, before the bones |
 | Ulna, radius → forearm base | 4 × M3 × 16 each into inserts in the base sides | from outside |
@@ -36,9 +38,10 @@ Nothing in this guide has been built yet: it is the order the CAD was designed f
 | Wrist axle → flange, T fitting → axle | M3 grubs on flats | from outside |
 | Bevel C → roll shaft | D-bore on a 2 mm flat; trapped between the T-fitting bearing and the flange bearing | none needed |
 | Hand → roll shaft | aluminium flange hub: set screws on the shaft flat, 4 × M3 × 8 into inserts in the hand bottom | from inside the hand body, before the head |
-| Worm → gearmotor | M4 set screw on the D flat; top pin in a thrust bearing in the palm cap | before the palm cap |
-| Palm cap + head → hand body | 3 × M3 × 45 into inserts | from above |
-| Belt idlers | M5 × 35 in a slot of the bone + flange nut | from outside |
+| Worm → gearmotor | M4 set screw on the D flat; top pin in a thrust bearing in the palm dome | before the dome |
+| Hand head → hand body | 3 × M3 × 8 into inserts, on the floor of the turret pillars | from above, before the dome |
+| Palm dome → head | 6 × M3 × 10 into inserts in the cheek tops, beside the wheels; its plugs hold the finger pins | from above |
+| Belt idlers | M5 × 35 in a slot of the bone + flange nut (button head at the elbow) | from outside |
 
 ## Order
 ### Base
@@ -56,7 +59,7 @@ Nothing in this guide has been built yet: it is the order the CAD was designed f
 
 ### Upper arm and elbow
 1. Fit the 6801 bearings in the bones (Loctite 638). Screw the two geared motors to the carrier, upper one facing left, lower one facing right; fit the 20-tooth pulleys.
-2. Build the elbow stack on the Ø12 shaft: spider in the middle, the two side bevels with their bearings, shims and wave springs, then the bones, then the cradle walls. Belts go on before the bones close.
+2. Build the elbow stack on the Ø12 shaft: spider in the middle, the two side bevels with their bearings, shims and wave springs, then the two cradle walls, then the bones outside them. Screw the walls to the cradle plate. Belts go on before the walls close.
 3. Slide the right bone over the gearbox shaft and the left bone with its 6810 over the hub. Fit the key and the flange hub from outside and bolt it to the bone. Put the carrier between the bones, belts over the motor pulleys, and bolt it through both bones.
 4. Fit the forearm bevel hub through the cradle 6806 with timing marks facing, then the forearm base on the hex.
 5. Fit the idlers, tension the belts (below), screw on the two covers.
@@ -65,7 +68,7 @@ Nothing in this guide has been built yet: it is the order the CAD was designed f
 1. Screw the wrist motors to ulna and radius, build the wrist stack like the elbow one, screw the bones to the forearm base.
 2. Roll shaft: bevel C on its flat, up through the flange bearings.
 3. Hand as in `wrist_v0/hand_print_notes.md`: the hub in the hand bottom clamps on the roll shaft.
-4. Coils, ferrites, boards, camera.
+4. PCB coils with their ferrite sheet (`WRIST_BUILD.md`, section Coils), boards, camera.
 
 ## Shoulder balancer
 1. Fit the two U-groove bearings in the bracket (M4 × 30 with nyloc nuts; the nut of the second one sits in the pocket under the bracket, so fit it before the bracket goes on the turntable) and the eye bolt in the anchor, nut loose.

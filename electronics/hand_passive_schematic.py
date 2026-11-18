@@ -17,7 +17,7 @@ def rx_hand(path='rx_hand.svg'):
         xc = W[0] - 2.4                                      # coil column
         d.add(elm.Line().at(N).to((xc, N[1])))
         coil = d.add(elm.Inductor2(loops=4).at((xc, N[1])).to((xc, S[1]))
-                     .label('RX coil\nLitz, Ø44 cup', loc='top', ofst=0.3))
+                     .label('RX coil\nPCB RX24', loc='top', ofst=0.3))
         d.add(elm.Line().at(S).to((xc, S[1])))
         d.add(elm.Dot().at((xc, N[1])))
         # GND rail from W, down to y_g
@@ -53,7 +53,7 @@ def rx_hand(path='rx_hand.svg'):
         d.add(elm.Dot().at((p[0], y_g)))
         d.add(elm.Line().at(ic.OUT1).right(1.0)); o1 = d.here
         d.add(elm.Line().at(ic.OUT2).right(1.0)); o2 = d.here
-        d.add(elm.Motor().at(o1).to(o2).label('Ø22 gear motor', loc='bottom', ofst=0.4))
+        d.add(elm.Motor().at(o1).to(o2).label('Ø25 gear motor', loc='bottom', ofst=0.4))
 
         # ---- frequency detectors, fed from the top coil node (it swings 0..VM against GND) ----
         def detector(y, lv, cv, rv, txt, switch):

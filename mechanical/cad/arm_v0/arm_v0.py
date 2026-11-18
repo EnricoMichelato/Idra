@@ -42,14 +42,14 @@ P = dict(
     # belts: motor 16T -> elbow pulley (as big as the side bevel), one belt per motor
     t_motor=20, t_elb=160, belt_teeth_A=190, belt_teeth_B=230, belt_w=10.0, belt_t=1.5, mp_w=12.0, mp_od=12.2, mp_flange_od=16.0,
     # elbow motors: NEMA17 + bolt-on 5:1 planetary gearbox, staggered along the arm (A above B), in a printed carrier
-    el_gb=(42.0, 41.0, 5), el_motor_len=39.0, el_shaft=(8.0, 23.5), el_wall=6.0, half_min=65.5,
+    el_gb=(42.0, 41.0, 5), el_motor_len=39.0, el_shaft=(8.0, 23.5), el_wall=4.0, half_min=65.5,
     # upper arm (humerus): two plates, motors back to back
     n17_sq=42.3, n17_hole=31.0,
     plate_t=6.0, pulley_gap=2.5,                # bones: laser-cut 6 mm aluminium
     sh_r=40.0, el_r=33.0, pin_d=12.0,
     cover=(90.0, 4.0),                         # one cover part for the whole arm: length, thickness (2x arm, 4x forearm)
     # cradle (outside the humerus plates)
-    wall_gap=1.0, wall_t=10.0, ear_r=26.0, cr_fillet=5.0, cr_y=42.0, cr_plate_t=26.0, b61810=(65.0, 50.0, 7.0),
+    wall_gap=1.0, wall_t=7.5, ear_r=26.0, cr_fillet=5.0, cr_y=42.0, cr_plate_t=26.0, b61810=(65.0, 50.0, 7.0),
     hub_d=30.0, tube_od=38.0, tube_id=20.0, brg_od=42.0, brg_id=30.0, brg_w=7.0,
     Lf=240.0,                                  # forearm: elbow axis -> wrist apex (about as long as the upper arm)
     # shoulder: NEMA23 with integrated steel planetary gearbox
@@ -256,11 +256,12 @@ def build(p=P):
     Rh = SB.BoundingBox().ymax                                        # side bevel heel radius
     toe = SB.BoundingBox().xmin
     z_out_back = OUT.BoundingBox().zmax
-    # belt plane: right next to the bones (the shoulder unit sets their spacing), so the pulley load sits by the bone bearing
-    xc = max(51.5, hg + p['belt_w']/2 + 0.5, p['half_min'] - p['pulley_gap'] - mw/2)
+    # EXOSKELETON layout: the bones are the outermost parts. From the centre: bevel, pulley, cradle wall, bone.
+    xc = max(50.0, hg + p['belt_w']/2 + 0.5)                             # a geared motor (80 long) must end short of the other belt
     pul_out = xc + mw/2
     u0 = max(pul_out + p['pulley_gap'], p['half_min']); u1 = u0 + p['plate_t']   # humerus plates (the shoulder unit sets the minimum)
-    wall_in = u1 + p['wall_gap']; wall_out = wall_in + p['wall_t']       # cradle walls outside the plates
+    wall_out = u0 - p['wall_gap']; wall_in = wall_out - p['wall_t']      # cradle walls INSIDE the bones, between pulley and bone
+    assert wall_in >= pul_out + 0.8, 'no room for the cradle wall between pulley and bone'
     D_e = pitch_d(p['t_elb']); D_m = pitch_d(p['t_motor'])
     rb_e = (D_e - 0.76)/2; rf_e = max(rb_e + 1.2, Rh)
     Lu = 205.0                                                           # shoulder axis -> elbow axis
@@ -318,7 +319,7 @@ def build(p=P):
             pl = pl.union(prism_yz(_hull(_circ(0, -p['bal']['b'], 9.0) + _circ(0, -20.0, 22.0)), x0, x1))
             pl = pl.cut(cyl_x(x0-1, x1+1, 32.5)).cut(cyl_x(x0-1, x1+1, R_TAP5).translate((0, 0, -p['bal']['b'])))
         for cy_, cz_ in (car_R if sg > 0 else car_L): pl = pl.cut(cyl_x(x0-1, x1+1, R_M5).translate((0, cy_, cz_)))   # motor carrier
-        pl = pl.cut(cyl_x(x0-1, x1+1, p['el_shaft'][0]/2+1.5).translate((0, 0, DRV[side_]['z'])))   # the gearbox shaft end reaches into the plate
+        for sy_ in (-1, 1): pl = pl.cut(cyl_x(x0-1, x1+1, R_M3).translate((0, sy_*17.0, DRV[side_]['z'])))    # 2x M3 for the bearing block of the motor shaft
         adj = p['idl_adj']                                                 # tensioner slots (M5 idler bolt)
         for (cy_, cz_), (ny_, nz_) in zip(DRV[side_]['idl_c'], DRV[side_]['idl_n']):
             sl = _hull(_circ(cy_-ny_*adj, ze+cz_-nz_*adj, R_M5) + _circ(cy_+ny_*adj, ze+cz_+nz_*adj, R_M5))
@@ -333,7 +334,7 @@ def build(p=P):
             wall = wall.cut(cyl_x(*xr(sg*(xf-1), sg*(xf+wt_+1)), R_M3).translate((0, yy, zc+zz)))
         car = car.union(wall)
     blkL = bx(-(u0-0.3), -(xf+wt_)+0.01, yb0, -8.0, zc_0, zA-sq/2-1.0)
-    blkR = bx(xf+wt_-0.01, u0-0.3, yb0, sq/2+1.0, zc_0, zc_0+12.0)
+    blkR = bx(xf+wt_-0.01, u0-0.3, yb0, sq/2+1.0, zc_0, min(zc_0+12.0, zB-12.5))
     car = car.union(blkL).union(blkR)
     for cy_, cz_ in car_L: car = car.cut(cyl_x(-(u0+1), -(u0-11.0), R_INS5).translate((0, cy_, cz_)))
     for cy_, cz_ in car_R: car = car.cut(cyl_x(u0-11.0, u0+1, R_INS5).translate((0, cy_, cz_)))
@@ -348,6 +349,13 @@ def build(p=P):
         parts[f'arm_motor_elbow_{side}_shaft'] = cyl_x(*xr(sg*xf, sg*(xf+p['el_shaft'][1])), p['el_shaft'][0]/2).translate((0, 0, zc)).val()
         mp = pulley_gen(sg*xc-mw/2, p['mp_od']/2, p['mp_flange_od']/2, mw, p['el_shaft'][0]/2)
         parts[f'arm_mpulley_{side}_20T'] = mp.translate((0, 0, zc)).val()
+        # the shaft end runs in a 688 held by a block screwed to the inner face of the bone: the belt pull goes into the bone
+        xe = xf + p['el_shaft'][1]                                         # shaft end
+        blk = prism_yz(_hull(_circ(0, zc, 11.5) + _circ(-17.0, zc, 5.5) + _circ(17.0, zc, 5.5)), *xr(sg*(xe-5.5), sg*u0))
+        blk = blk.cut(cyl_x(*xr(sg*(xe-6.0), sg*(xe+0.3)), fseat(16.0)).translate((0, 0, zc))).cut(cyl_x(*xr(sg*(xe-1.0), sg*(u0+1)), 5.0).translate((0, 0, zc)))
+        for sy_ in (-1, 1): blk = blk.cut(cyl_x(*xr(sg*(u0-6.2), sg*(u0+1)), R_INS3).translate((0, sy_*17.0, zc)))
+        parts[f'arm_shaft_block_{side}'] = blk.val()
+        parts[f'arm_brg_motor_{side}_688'] = cyl_x(*xr(sg*(xe-5.2), sg*(xe-0.2)), 8.0, 4.0).translate((0, 0, zc)).val()
         bw2 = p['belt_w']/2; ri_b = p['idl_r']
         # tensioners: smooth idler on the BACK of the belt, outside the loop, on an M5 bolt in a slot of the bone + flange nut
         for (cy_, cz_), tag in zip(d_['idl_c'], ('front', 'back')):
@@ -356,7 +364,7 @@ def build(p=P):
                    .union(cyl_x(sg*xc+bw2, sg*xc+bw2+1.0, ri_b+1.5)).cut(cyl_x(sg*xc-bw2-2, sg*xc+bw2+2, R_M5)))
             parts[f'arm_idler_{side}_{tag}_smooth'] = idl.translate((0, yc_, zc_)).val()
             parts[f'arm_spacer_idler_{side}_{tag}'] = cyl_x(*xr(sg*(xc+bw2+1.0), sg*u0), 4.5, 2.6).translate((0, yc_, zc_)).val()
-            bolt = cyl_x(*xr(sg*(xc-bw2-1.0), sg*(u1+5.0)), 2.5).union(cyl_x(*xr(sg*(xc-bw2-4.5), sg*(xc-bw2-1.0)), 4.25))
+            bolt = cyl_x(*xr(sg*(xc-bw2-1.0), sg*(u1+5.0)), 2.5).union(cyl_x(*xr(sg*(xc-bw2-3.75), sg*(xc-bw2-1.0)), 4.75))   # button head (ISO 7380): a socket head would touch the other motor
             parts[f'arm_tensioner_{side}_{tag}_screw_M5'] = bolt.translate((0, yc_, zc_)).val()
             parts[f'arm_tensioner_{side}_{tag}_nut_M5'] = cyl_x(*xr(sg*u1, sg*(u1+4.7)), 4.6, 2.5).translate((0, yc_, zc_)).val()   # flange nut
         parts[f'belt_elbow_{side}_GT2'] = belt_solid(sg*xc, d_['circ'], p['belt_w']).translate((0, 0, ze)).val()
@@ -373,7 +381,7 @@ def build(p=P):
     for bn in ('arm_humerus_R', 'arm_humerus_L'):
         v0 = parts[bn].Volume(); parts[bn] = parts[bn].cut(drl).cut(drl.mirror('XZ', (0, 0, 0)))
         assert abs(v0 - parts[bn].Volume() - 6*math.pi*R_M3**2*p['plate_t']) < 15.0, 'cover screw hole meets another feature in ' + bn
-    x_pe = wall_out + 1.2                                                # pin end
+    x_pe = u1 + 1.2                                                      # pin end, just proud of the bones
     parts['cradle_pin_steel'] = (cyl_x(-x_pe, x_pe, p['pin_d']/2).cut(cyl_x(x_pe-2.5, x_pe+1, 3.05))
                                  .translate((0, 0, ze)).val())
     parts['cradle_magnet_flex_6x2.5'] = cyl_x(x_pe-2.5, x_pe, 3.0).translate((0, 0, ze)).val()
@@ -396,44 +404,56 @@ def build(p=P):
     SBc = cq.Workplane('XY').newObject([SB]).cut(mk_B, clean=False).cut(cq.Workplane('XY').newObject([from_A(mk_A.val())]), clean=False).val()
     SA = to_A(SBc)
     shim_od, shim_t = p['pre_shim']; spr_od = p['pre_spring'][0]
+    xsp = shim_t + p['pre_spring'][1] - (wall_in - pul_out)              # how deep shim and spring sit inside the pulley bore
     for nm, gear, sg in (('A', SA, -1), ('B', SBc, 1)):
         pu = cyl_x(*xr(sg*hg, sg*(pul_out-1.0)), rb_e).union(cyl_x(*xr(sg*(pul_out-1.0), sg*pul_out), rf_e))
         body = cq.Workplane('XY').newObject([gear]).union(pu, clean=False).cut(cyl_x(-90, 90, p['pin_d']/2+0.2), clean=False)
         body = body.cut(cyl_x(*xr(sg*(toe-0.2), sg*(toe+b_w+0.2)), fseat(b_od)), clean=False)
-        body = body.cut(cyl_x(*xr(sg*(pul_out-b_w-0.2), sg*(pul_out+0.2)), fseat(b_od)), clean=False)
+        body = body.cut(cyl_x(*xr(sg*(pul_out-xsp-b_w-0.2), sg*(pul_out+0.2)), fseat(b_od)), clean=False)
         parts[f"elbow_side_{nm}_{p['z_side']}T_{p['t_elb']}T"] = body.translate((0, 0, ze)).val()
-        # axial preload: shim on the static inner ring of the pulley-end 6801 + wave spring in the plate counterbore
-        parts[f'arm_elbow_preload_{nm}_shim_steel'] = cyl_x(*xr(sg*pul_out, sg*(pul_out+shim_t)), shim_od/2, 6.1).translate((0, 0, ze)).val()
-        parts[f'arm_elbow_preload_{nm}_wave_spring_steel'] = cyl_x(*xr(sg*(u0+0.5-p['pre_spring'][1]), sg*(u0+0.5)), spr_od/2, 6.1).translate((0, 0, ze)).val()
-        if u0+0.5-p['pre_spring'][1] - (pul_out+shim_t) > 0.2:             # tube that fills the gap between the pulley and the spring
-            parts[f'arm_elbow_gap_spacer_{nm}_steel'] = cyl_x(*xr(sg*(pul_out+shim_t), sg*(u0+0.5-p['pre_spring'][1])), 7.5, 6.1).translate((0, 0, ze)).val()
-        # the pin turns with the carrier: 6801 in the plate; the spring rests on its inner ring (both turn with the pin),
-        # a spacer carries the preload to the cradle wall -> closed loop inside the carrier, nothing rubs
+        # axial preload, closed inside the cradle: shim + wave spring sit in the pulley-end bore, between the 6801 and the cradle wall
+        parts[f'arm_elbow_preload_{nm}_shim_steel'] = cyl_x(*xr(sg*(pul_out-xsp), sg*(pul_out-xsp+shim_t)), shim_od/2, 6.1).translate((0, 0, ze)).val()
+        parts[f'arm_elbow_preload_{nm}_wave_spring_steel'] = cyl_x(*xr(sg*(pul_out-xsp+shim_t), sg*wall_in), spr_od/2, 6.1).translate((0, 0, ze)).val()
+        # the pin is clamped in the cradle walls and turns in a 6801 in each bone; a thin ring keeps wall and bearing apart
         parts[f'arm_brg_elbow_{nm}_6801'] = cyl_x(*xr(sg*(u0+0.5), sg*(u0+5.5)), 10.5, 6.0).translate((0, 0, ze)).val()
-        parts[f'cradle_spacer_{nm}'] = cyl_x(*xr(sg*(u0+5.5), sg*wall_in), 7.4, 6.05).translate((0, 0, ze)).val()
+        parts[f'cradle_spacer_{nm}'] = cyl_x(*xr(sg*wall_out, sg*(u0+0.5)), 7.4, 6.05).translate((0, 0, ze)).val()
         parts[f'elbow_brg_{nm}_toe_6801'] = cyl_x(*xr(sg*toe, sg*(toe+b_w)), b_od/2, b_id/2).translate((0, 0, ze)).val()
-        parts[f'elbow_brg_{nm}_pulley_6801'] = cyl_x(*xr(sg*(pul_out-b_w), sg*pul_out), b_od/2, b_id/2).translate((0, 0, ze)).val()
+        parts[f'elbow_brg_{nm}_pulley_6801'] = cyl_x(*xr(sg*(pul_out-xsp-b_w), sg*(pul_out-xsp)), b_od/2, b_id/2).translate((0, 0, ze)).val()
 
-    # ================= CRADLE (carrier) outside the humerus plates =================
-    cy2 = p['cr_y']; er = p['ear_r']; frr = p['cr_fillet']
+    # ================= CRADLE inside the bones, in THREE pieces that all print flat =================
+    # plate (bearing seats printed as true circles) + two walls (pin bore printed as a true circle), 4 countersunk M3 per wall
+    cy2 = p['cr_y']; er = p['ear_r']
     pz0 = max(z_out_back + 3.0, plate_r_el + 3.5, rf_e + 1.5); pz1 = pz0 + p['cr_plate_t']     # the plate clears the pulley flanges
-    ear = [(-er, 0.0), (er, 0.0), (cy2, pz0-6.0), (cy2, pz0+0.01), (-cy2, pz0+0.01), (-cy2, pz0-6.0)]
-    cr = bx(-wall_out, wall_out, -cy2, cy2, pz0, pz1)
-    for sg in (-1, 1):
-        x_in, x_out_ = sg*wall_in, sg*wall_out
-        cr = cr.union(prism_yz(ear, x_in, x_out_)).union(cyl_x(*xr(x_in, x_out_), er))
-        xf = xr(sg*(wall_in-frr), x_in)
-        fil = bx(xf[0], xf[1], -cy2, cy2, pz0-frr, pz0+0.01)
-        fil = fil.cut(prism_xz(_circ(sg*(wall_in-frr), pz0-frr, frr), -cy2-1, cy2+1)).intersect(prism_yz(ear, xf[0]-1, xf[1]+1))
-        cr = cr.union(fil)
-        cr = cr.cut(cyl_x(*xr(sg*(wall_in-1), sg*(wall_out+1)), p['pin_d']/2))       # pin clamped in the walls
-        cr = cr.cut(cyl_y(5.0, er+1.0, R_TAP3, cx=sg*(wall_in+wall_out)/2, cz=0.0))      # M3 grub on the pin flat
-    # 6806 at the bottom of the carrier plate, big thin-section 61810 at the top: the forearm base sits right on it
+    cr = bx(-wall_in, wall_in, -cy2, cy2, pz0, pz1)
     bo, bi, bw61 = p['b61810']
     cr = cr.cut(cyl_z(pz0-1, pz0+p['brg_w'], fseat(p['brg_od']))).cut(cyl_z(pz0-1, pz1+1, p['hub_d']/2+2.0))
     cr = cr.cut(cyl_z(pz1-bw61, pz1+1, fseat(bo)))
-    cr = round_plan(cr, wall_out, cy2, 28.0, er+0.01, -er-5.0, pz1+5.0)          # rounded corners seen from above
-    parts['cradle_carrier'] = cr.translate((0, 0, ze)).val()
+    cr = round_plan(cr, wall_in, cy2, 12.0, er+0.01, -er-5.0, pz1+5.0)
+    wall_scr = [(sy_*(cy2-12.0), zz_) for sy_ in (-1, 1) for zz_ in (pz0+6.5, pz1-6.5)]
+    # lightening: four through pockets (vertical, free to print) between the ring around the bearings and the outer frame;
+    # a rib on the x axis ties the ring straight to each wall, so the bearing spacing and the load path stay the same
+    rr_ = fseat(bo) + 4.0; px1_ = wall_in - 8.5; py_ = cy2 - 6.0
+    for sx_ in (-1, 1):
+        for sy_ in (-1, 1):
+            pk_ = bx(*xr(sx_*22.0, sx_*px1_), *xr(sy_*4.0, sy_*py_), pz0-1, pz1+1).cut(cyl_z(pz0-2, pz1+2, rr_))
+            try: pk_ = pk_.edges('|Z').fillet(2.5)
+            except Exception: pass
+            cr = cr.cut(pk_)
+    for sg in (-1, 1):
+        for yy_, zz_ in wall_scr: cr = cr.cut(cyl_x(*xr(sg*(wall_in-6.5), sg*(wall_in+1)), R_INS3).translate((0, yy_, zz_)))
+    parts['cradle_plate'] = cr.translate((0, 0, ze)).val()
+    wprof = _hull(_circ(0.0, 0.0, er) + [(cy2-10.0, pz0-6.0), (cy2-10.0, pz1), (-(cy2-10.0), pz1), (-(cy2-10.0), pz0-6.0)])
+    for sg, nm in ((-1, 'L'), (1, 'R')):
+        wl = prism_yz(wprof, *xr(sg*wall_in, sg*wall_out))
+        wl = wl.cut(cyl_x(*xr(sg*(wall_in-1), sg*(wall_out+1)), p['pin_d']/2))                       # pin clamped in the wall
+        wl = wl.cut(cyl_y(5.0, er+1.0, R_TAP3, cx=sg*(wall_in+wall_out)/2, cz=0.0))                    # M3 grub on the pin flat
+        for yy_, zz_ in wall_scr:                                                                     # countersunk M3 x 12 into the plate inserts
+            wl = wl.cut(cyl_x(*xr(sg*(wall_in-1), sg*(wall_out+1)), R_M3).translate((0, yy_, zz_)))
+            wl = wl.cut(cq.Workplane('XY').polyline([(wall_out-1.8, 0), (wall_out-1.8, R_M3), (wall_out+0.01, 3.3), (wall_out+0.01, 0)]).close()
+                        .revolve(360, (0, 0, 0), (1, 0, 0)).mirror('YZ', (0, 0, 0)).translate((0, yy_, zz_)) if sg < 0 else
+                        cq.Workplane('XY').polyline([(wall_out-1.8, 0), (wall_out-1.8, R_M3), (wall_out+0.01, 3.3), (wall_out+0.01, 0)]).close()
+                        .revolve(360, (0, 0, 0), (1, 0, 0)).translate((0, yy_, zz_)))
+        parts[f'cradle_wall_{nm}'] = wl.translate((0, 0, ze)).val()
     parts['cradle_brg_hub_low_6806'] = cyl_z(ze+pz0, ze+pz0+p['brg_w'], p['brg_od']/2-0.05, p['brg_id']/2).val()
     parts['cradle_brg_forearm_6810'] = cyl_z(ze+pz1-bw61, ze+pz1, bo/2, bi/2).val()
 
@@ -774,7 +794,7 @@ GUN_D, GUN_L, PCB_DARK = '#1a1c1f', '#2a2d32', '#1f2226'
 def tone(n):
     if n.startswith(('arm_humerus', 'foot_housing', 'foot_desk_lug', 'yaw_shoulder_pedestal', 'yaw_n23_clamp', 'foot_motor_shelf',
                      'foot_cable_tube')): return GUN_D
-    if n.startswith(('cradle_carrier', 'arm_tensioner', 'arm_encoder_flex_bracket', 'arm_spacer')): return GUN_L
+    if n.startswith(('cradle_plate', 'cradle_wall', 'arm_tensioner', 'arm_encoder_flex_bracket', 'arm_spacer')): return GUN_L
     return GUNMETAL
 
 def material(n):
@@ -786,7 +806,7 @@ def material(n):
     if n.startswith(('elbow_side', 'idle_satellite', 'forearm_bevel_hub', 'yaw_ring_gear', 'foot_yaw_pinion')) or 'cycloid_disc' in n:
         return 'gear'
     if n.startswith('arm_humerus'): return 'alu'
-    if n.startswith(('arm_motor_carrier', 'arm_cover', 'cradle_carrier', 'cradle_spider', 'forearm_base_plate', 'yaw_turntable',
+    if n.startswith(('arm_motor_carrier', 'arm_shaft_block', 'arm_cover', 'cradle_plate', 'cradle_wall', 'cradle_spider', 'forearm_base_plate', 'yaw_turntable',
                      'yaw_shoulder_pedestal', 'yaw_shoulder_hub', 'yaw_shoulder_strap', 'yaw_balancer_bracket', 'yaw_balancer_anchor',
                      'foot_housing', 'foot_desk_lug', 'foot_deck', 'foot_yaw_cartridge', 'foot_yaw_retainer', 'foot_yaw_spacer', 'yaw_spacer_inner', 'yaw_spindle_clamp',
                      'arm_encoder_flex_bracket')): return 'printed'
@@ -825,7 +845,7 @@ def color_of(n):
     if 'pulley' in n or 'idler' in n or 'spacer' in n or 'tensioner' in n: return '#3a3d44'
     if n.startswith(('yaw_shoulder_strap', 'yaw_balancer_bracket', 'yaw_balancer_anchor', 'arm_encoder', 'forearm_base')): return BRASS
     if n.startswith('arm_cover'): return GUN_3
-    if n.startswith(('arm_motor_carrier', 'yaw_turntable', 'foot_desk_lug', 'cradle_spider', 'yaw_shoulder_hub')): return GUN_2
+    if n.startswith(('arm_motor_carrier', 'arm_shaft_block', 'yaw_turntable', 'foot_desk_lug', 'cradle_spider', 'yaw_shoulder_hub')): return GUN_2
     if n.startswith('foot_deck'): return GUN_3
     if n.startswith(('foot', 'yaw_', 'arm_', 'cradle')): return GUN_1
     return '#999999'

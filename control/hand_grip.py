@@ -18,7 +18,7 @@ NOLOAD_CURRENT = 0.08    # A
 NOLOAD_RPM = 100.0
 KT = STALL_TORQUE/(STALL_CURRENT - NOLOAD_CURRENT)      # Nm per A at the output shaft
 
-# --- worm and wheels (hand v2.4) ---------------------------------------------
+# --- worm and wheels (hand v2.6) ---------------------------------------------
 WORM_PD = 16.0           # mm
 WORM_M = 1.0             # module, single start
 WHEEL_Z = 28
@@ -63,7 +63,7 @@ def report():
     L += ['', '**Chosen: 0.75 A (R_ILIM 82 kΩ).** About %.0f N per finger, %.1f kg held by friction alone with a safety factor of %.0f '
           'and %.0f m/s² of arm acceleration. The Fin Ray fingers also wrap the object, which adds to this.' % (b['f_finger'], b['payload'], SAFETY, ACCEL), '',
           '## Other numbers', '',
-          f"- **Worm axial load:** {b['f_axial']:.0f} N, pushing the worm **up**, away from the motor. It goes into the F6-12M thrust ball bearing of the palm cap, not into the gearmotor.",
+          f"- **Worm axial load:** {b['f_axial']:.0f} N, pushing the worm **up**, away from the motor. It goes into the F6-12M thrust ball bearing of the palm dome, not into the gearmotor.",
           f"- **Worm efficiency:** {b['eff']:.0%}. The lead angle is {math.degrees(LEAD_ANGLE):.1f}°, so the worm cannot be back-driven for any friction above {math.tan(LEAD_ANGLE):.2f}; the 75:1 gearbox adds to that. The grip holds with the power off.",
           f"- **Speed:** {rpm:.0f} rpm at the worm, {rpm/WHEEL_Z*6:.0f}°/s at the fingers. Fully open to an 80 mm object: {t_grasp:.1f} s. Fully open to tips touching: {t_full:.1f} s ({TRAVEL_FULL/360*WHEEL_Z:.1f} worm turns).",
           f"- **Power through the coils:** about {12*0.75:.0f} W for the fraction of a second at stall, 2–4 W while closing. The link has to deliver this: check it on the bench with a 15 Ω load.",

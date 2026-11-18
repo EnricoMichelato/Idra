@@ -72,7 +72,7 @@ input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 <div class="flow" aria-label="Signal path">
   <div class="blk side"><b>Flange</b>Camera XIAO: generates the PWM and reads the current</div>
   <div class="blk side"><b>Flange</b>IR2104 bridge + 2 MOSFETs, 0.1 Ω shunt</div>
-  <div class="blk"><b>Inductive link</b>Ø44 ferrite cups, the roll spins endlessly</div>
+  <div class="blk"><b>Inductive link</b>two 4-layer PCB coils on ferrite sheet, the roll spins endlessly</div>
   <div class="blk"><b>Hand</b>Rectifier → VM 10–15 V → DRV8871 → motor</div>
   <div class="blk"><b>Hand</b>Two LC filters: the frequency picks IN1 or IN2</div>
 </div>
@@ -147,14 +147,14 @@ safety        4 s timeout on every move; the emergency button cuts the 24 V and 
 <h2>Bench test</h2>
 <p>Do this before touching the CAD, with under €10 of parts. The ticks are saved only in this browser.</p>
 <ol class="bench" id="bench">
-  <li><label><input type="checkbox" id="b1"><span>Measure the inductance of the two coils in their cups, at the real gap (a 3 mm spacer in between).<span class="ok">With an LCR meter, or with a known capacitor in parallel and a signal generator: the resonance gives L = 1/((2πf)²C).</span></span></label></li>
+  <li><label><input type="checkbox" id="b1"><span>Measure the inductance of the two PCB coils with their ferrite sheet, at the real 1 mm gap.<span class="ok">With an LCR meter, or with a known capacitor in parallel and a signal generator: the resonance gives L = 1/((2πf)²C).</span></span></label></li>
   <li><label><input type="checkbox" id="b2"><span>TX alone: PWM at 98 and 207 kHz into the bridge, hand disconnected.<span class="ok">Passes if the MOSFETs stay lukewarm and the rectified open-circuit voltage on the RX coil stays below 30 V.</span></span></label></li>
-  <li><label><input type="checkbox" id="b3"><span>Power: rectifier, 47 µF and a 15 Ω, 10 W resistor as the load.<span class="ok">Passes if VM stays between 10 and 15 V at both frequencies. Below 9 V, add turns to the RX coil (for example from 18 to 24).</span></span></label></li>
+  <li><label><input type="checkbox" id="b3"><span>Power: rectifier, 47 µF and a 15 Ω, 10 W resistor as the load.<span class="ok">Passes if VM stays between 10 and 15 V at both frequencies. Below 9 V, switch to the RX28 coil board (28 turns instead of 24).</span></span></label></li>
   <li><label><input type="checkbox" id="b4"><span>Filters: scope on IN1 and IN2, then sweep the PWM frequency.<span class="ok">Passes if the right channel goes above 2 V and the wrong one stays at 0. Note the two frequencies where IN peaks: those go in the firmware.</span></span></label></li>
   <li><label><input type="checkbox" id="b5"><span>All together: DRV8871 and motor, without the hand.<span class="ok">98 kHz turns one way, 207 kHz the other, off stops. Pressing the limit switch interrupts the "open" rotation.</span></span></label></li>
   <li><label><input type="checkbox" id="b6"><span>Current: log the XIAO ADC while the hand closes on an object and opens up to the limit switch.<span class="ok">This gives the two firmware thresholds: stall and idle.</span></span></label></li>
   <li><label><input type="checkbox" id="b7"><span>Worm: close on an object, turn the bridge off and shake the hand in every position.<span class="ok">Passes if the fingers do not back off.</span></span></label></li>
-  <li><label><input type="checkbox" id="b8"><span>Heat: 20 open/close cycles in a row.<span class="ok">Cups, MOSFETs and DRV stay below 50 °C: no problem for the PETG hand.</span></span></label></li>
+  <li><label><input type="checkbox" id="b8"><span>Heat: 20 open/close cycles in a row.<span class="ok">MOSFETs and DRV stay below 50 °C and the coil boards below 60 °C: no problem for the PETG hand.</span></span></label></li>
 </ol>
 
 <h2>What changes in the model</h2>

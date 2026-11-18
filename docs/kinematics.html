@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
-<nav aria-label="Project pages" style="display:flex;flex-wrap:wrap;gap:6px 18px;max-width:1320px;margin:0 auto;padding:12px max(16px,env(safe-area-inset-left,0px)) 0;font:13px/1.4 system-ui,sans-serif;color:var(--muted)"><a href="./" style="color:inherit;text-decoration:none">Simulator</a><a href="kinematics.html" aria-current="page" style="color:inherit;text-decoration:underline">Kinematics</a><a href="passive-hand.html" style="color:inherit;text-decoration:none">Passive hand</a><a href="https://github.com/OWNER/idra" style="color:inherit;text-decoration:none">Repository</a></nav>
+<nav aria-label="Project pages" style="display:flex;flex-wrap:wrap;gap:6px 18px;max-width:1320px;margin:0 auto;padding:12px max(16px,env(safe-area-inset-left,0px)) 0;font:13px/1.4 system-ui,sans-serif;color:var(--muted)"><a href="./" style="color:inherit;text-decoration:none">Simulator</a><a href="kinematics.html" aria-current="page" style="color:inherit;text-decoration:underline">Kinematics</a><a href="https://github.com/enricomichelato/Idra" style="color:inherit;text-decoration:none">Repository</a></nav>
 <title>Arm Kinematics</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -95,7 +95,7 @@ ul{padding-left:20px;margin:8px 0}li{margin:3px 0;max-width:66ch}
     <h1>Arm kinematics, step by step</h1>
     <p class="sub">From the six joint angles to the fingertips, and back. The formulas are the ones in <code>control/kinematics.py</code>; the schematic robot runs them live, and each step highlights its part.</p>
   </div>
-  <div class="spec">Lu 205 · Lf 240 · d6 215.8 mm<br>shoulder 183 mm above the desk · 6 joints</div>
+  <div class="spec">Lu 205 · Lf 240 · d6 205.4 mm<br>shoulder 183 mm above the desk · 6 joints</div>
 </header>
 
 <div class="grid">
@@ -205,11 +205,11 @@ q6 = atan2( W₂₀ , W₂₁ )                 q6 = <output id="v-q6"></output>
   <p>Base and shoulder have one motor each. Elbow and wrist are differentials: two motors drive two side bevels, and the satellite between them makes the second rotation. Turning together, they bend; turning in opposite directions, they spin.</p>
   <div class="eq"><span class="c">elbow  (5:1 gearbox, belts 160/20: 40; bevels 30/15 → kp = 0.5)</span>
 A = 40 · (−q3 + q4/2)        B = 40 · (−q3 − q4/2)
-<span class="c">wrist  (belts 78/16 = 4.875; bevels 1:1)</span>
-A = 4.875 · (q5 + q6)           B = 4.875 · (q5 − q6)
+<span class="c">wrist  (belts 78/14 = 5.571; bevels 1:1)</span>
+A = 5.571 · (q5 + q6)           B = 5.571 · (q5 − q6)
 <span class="c">and back</span>
 q3 = −(A+B) / (2·40)    q4 = (A−B) / 40
-q5 =  (A+B) / (2·4.875)    q6 = (A−B) / (2·4.875)</div>
+q5 =  (A+B) / (2·5.571)    q6 = (A−B) / (2·5.571)</div>
   <div class="tw"><table>
     <thead><tr><th>Motor</th><th>Ratio</th><th>Steps/degree</th><th>Rotor</th><th>Turns</th><th>Steps</th></tr></thead>
     <tbody id="v-mot"></tbody>
@@ -243,8 +243,8 @@ steps = joints_to_steps(q)         <span class="c"># 6 integers for the TMC2209s
 
 <script>
 // ===== KINEMATICS (same as control/kinematics.py) =====
-const LU=205,LF=240,D6=215.8,SH=183;
-const RYAW=100/15*5,RSH=20,REL=5*160/20,KPEL=0.5,RWR=78/16,SPR=3200;
+const LU=205,LF=240,D6=205.4,SH=183;
+const RYAW=100/15*5,RSH=20,REL=5*160/20,KPEL=0.5,RWR=78/14,SPR=3200;
 const LIM=[[-170,170],[-30,90],[-60,105],[-180,180],[-90,90],[-Infinity,Infinity]];
 const d2r=Math.PI/180,r2d=180/Math.PI;
 const wrap=a=>((a+180)%360+360)%360-180;
@@ -327,7 +327,7 @@ function update(){
   ['q2','q3','q4','q5','q6'].forEach((k,i)=>$('v-'+k).textContent=sel?fmt(sel.q[i+1])+'°':'—');
   if(d>LU+LF+1e-6)$('v-q3').textContent='out of reach';
   // motors
-  const m=toMotors(S.q),names=[['Base','5 · 100/15 = 33.33','--base'],['Shoulder','planetary 1:20','--l-up'],['Elbow A','40 · diff.','--l-fo'],['Elbow B','40 · diff.','--l-fo'],['Wrist A','4.875 · diff.','--l-ha'],['Wrist B','4.875 · diff.','--l-ha']];
+  const m=toMotors(S.q),names=[['Base','5 · 100/15 = 33.33','--base'],['Shoulder','planetary 1:20','--l-up'],['Elbow A','40 · diff.','--l-fo'],['Elbow B','40 · diff.','--l-fo'],['Wrist A','5.571 · diff.','--l-ha'],['Wrist B','5.571 · diff.','--l-ha']];
   const rat=[RYAW,RSH,REL,REL,RWR,RWR];
   $('v-mot').innerHTML=m.map((v,i)=>`<tr><td><span class="dot" style="background:var(${names[i][2]})"></span>${names[i][0]}</td><td>${names[i][1]}</td><td class="num">${fmt(rat[i]*SPR/360,2)}</td><td class="num">${fmt(v,1)}°</td><td class="num">${fmt(v/360,2)}</td><td class="num">${fmt(Math.round(v*SPR/360),0)}</td></tr>`).join('');
   // solutions

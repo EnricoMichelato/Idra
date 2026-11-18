@@ -176,7 +176,7 @@ def static_scan(links, step=15):
 
 
 VARIANTS = [   # (name, shoulder motor torque, elbow motor torque, balancer torque in Nm)
-    ('arm v0.31 as designed, with the shoulder balancer', 1.26, 0.30, 7.0),
+    ('arm v0.32 as designed, with the shoulder balancer', 1.26, 0.30, 7.0),
     ('without the balancer', 1.26, 0.30, 0.0),
 ]
 

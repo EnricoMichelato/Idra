@@ -66,7 +66,7 @@ def budget(payload=0.5, bone='aluminium', bone_t=0.006, belt='gt2_10_steel', pro
 
     # --- wrist: belts, steppers -----------------------------------------------------------------
     wb = wrist_belt or belt
-    r_w = K.R_WR*16*0.002/(2*math.pi)
+    r_w = K.R_WR*14*0.002/(2*math.pi)
     Mw = F*D6
     rows.append(('wrist belts', Mw/(2*BELT_EA[wb]/0.100*r_w**2)*D6, wb))
     rows.append(('wrist motors', Mw/(2*0.40*STEPPER_POLES*K.R_WR**2)*D6, ''))
