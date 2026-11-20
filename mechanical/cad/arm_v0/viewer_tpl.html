@@ -84,7 +84,7 @@ table.spec td:last-child{font-family:var(--f-mono);font-size:12px}
 @media (max-width:560px){.bar h1{font-size:34px}.kc{width:46px;height:46px}.kc.wide{width:64px}.kc i{font-size:9px}.bar .ver{margin-left:0;text-align:left}}
 @media (prefers-reduced-motion:reduce){.kc{transition:none}.cap{transition:none}}
 </style></head><body><main>
-<header class="bar"><h1>ID<b>R</b>A</h1><span class="sub">Infinite Differential Roll Arm</span><span class="ver">arm v0.32 · wrist v1.29 · hand v2.6<br>design model, not built yet</span></header>
+<header class="bar"><h1>ID<b>R</b>A</h1><span class="sub">Infinite Differential Roll Arm</span><span class="ver">arm v0.46 · wrist v1.38 · hand v2.6<br>design model, not built yet</span></header>
 <!--SITE_NAV-->
 <!--SITE_HERO-->
 <div id="stage"><canvas id="cv"></canvas><div class="cap" id="cap"></div><div class="hint" id="hint">Drag to orbit · scroll or pinch to zoom · Shift or right button to pan</div>
@@ -115,7 +115,7 @@ table.spec td:last-child{font-family:var(--f-mono);font-size:12px}
 <div class="cols">
 <section class="panel"><h2>Joints</h2>
 <div class="row"><label class="l" for="yaw">Base (yaw)</label><input id="yaw" type="range" min="-170" max="170" value="0" step="1"><span class="val" id="yv">0°</span></div>
-<div class="row"><label class="l" for="pitch">Shoulder</label><input id="pitch" type="range" min="-30" max="90" value="0" step="1"><span class="val" id="pv">0°</span></div>
+<div class="row"><label class="l" for="pitch">Shoulder</label><input id="pitch" type="range" min="-90" max="90" value="0" step="1"><span class="val" id="pv">0°</span></div>
 <div class="row"><label class="l" for="roll">Elbow (flexion)</label><input id="roll" type="range" min="-60" max="105" value="0" step="1"><span class="val" id="rv">0°</span></div>
 <div class="row"><label class="l" for="pron">Forearm pronation</label><input id="pron" type="range" min="-180" max="180" value="0" step="1"><span class="val" id="nv">0°</span></div>
 <div class="row"><label class="l" for="wp">Wrist pitch</label><input id="wp" type="range" min="-90" max="90" value="0" step="1"><span class="val" id="wpv">0°</span></div>
@@ -169,7 +169,7 @@ function look(e,t,u){let z=[e[0]-t[0],e[1]-t[1],e[2]-t[2]];let l=Math.hypot(z[0]
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const SEGS={"0":"abcdef","1":"bc","2":"abdeg","3":"abcdg","4":"bcfg","5":"acdfg","6":"acdefg","7":"abc","8":"abcdefg","9":"abcdfg","-":"g"," ":""},LIT=[1.0,0.16,0.1],DIM=[0.22,0.05,0.04];
 const ZT=14,TH0=46,SW=-1,CANT=20,WZ=__WZ__;
-const ZE=__ZE__,RB1=__RB1__,RB2=__RB2__,RCAP=__RCAP__,KP=__KP__,RYAW=__RYAW__,YPX=__YPX__,YPY=__YPY__,SH=__SH__;
+const ZE=__ZE__,RB1=__RB1__,RB2=__RB2__,RCAP=__RCAP__,KP=__KP__,RYAW=__RYAW__,YPX=__YPX__,YPY=__YPY__,SH=__SH__,SPY=__SPY__,SPZ=__SPZ__;
 const cam={az:-50,el:16,d:1500,t:[0,70,190]};
 const VIEWS={iso:[-50,18],front:[-90,0],side:[0,0],top:[-90,89]};
 const vis={base:true,electronics:true,shoulder:true,upper_arm:true,elbow:true,forearm:true,belts:true,wrist:true,hand:true};
@@ -197,16 +197,17 @@ const sg=S.pitch,ep=S.roll,ps=S.yaw,ph=S.pron;
 const Ms=rx(-sg),piv=(m)=>mul(tr([0,0,ZE]),mul(m,tr([0,0,-ZE]))),Ec=piv(rx(-ep));
 const Yw=rz(ps),YP=mul(tr([YPX,YPY,0]),mul(rz(ps*RYAW),tr([-YPX,-YPY,0])));
 const SA=piv(rx(-ep+KP*ph)),SB=piv(rx(-ep-KP*ph)),FR=mul(Ec,piv(rz(ph))),ID=mul(Ec,piv(rz(-ph)));
-const M={foot:I(),desk:I(),yawpin:YP,yaw:Yw,arm:mul(Yw,Ms),cradle:mul(Yw,mul(Ms,Ec)),idle:mul(Yw,mul(Ms,ID)),sideA:mul(Yw,mul(Ms,SA)),sideB:mul(Yw,mul(Ms,SB)),fore:mul(Yw,mul(Ms,FR))};
+const SP=(y)=>mul(Yw,mul(tr([0,y,SPZ]),mul(rx(sg*RCAP),tr([0,-y,-SPZ]))));   // shoulder pinions: 13:1 against the steel sectors
+const M={foot:I(),desk:I(),yawpin:YP,shpinA:SP(SPY),shpinB:SP(-SPY),yaw:Yw,arm:mul(Yw,Ms),cradle:mul(Yw,mul(Ms,Ec)),idle:mul(Yw,mul(Ms,ID)),sideA:mul(Yw,mul(Ms,SA)),sideB:mul(Yw,mul(Ms,SB)),fore:mul(Yw,mul(Ms,FR))};
 const wp=S.wp,wr=S.wr,g=S.grip,ww=SW*(g-TH0)*ZT,MW=mul(M.fore,tr([0,0,WZ])),MH=mul(MW,mul(rx(wp),rz(wr)));
 M.W_fixed=MW;M.W_pitch=mul(MW,rx(wp));M.W_idle=mul(MW,mul(rx(wp),rz(-wr)));M.W_A=mul(MW,rx(wp+wr));M.W_B=mul(MW,rx(wp-wr));M.W_roll=MH;M.W_worm=mul(MH,rz(ww));
 return {M:M,MH:MH};
 }
 // ---------- showcase animation: pick the apple, carry it, endless wrist roll, differential elbow ----------
 // keys: [t, yaw, pitch, roll(elbow), pron, wrist pitch, wrist roll, grip, easing of the wrist roll]
-const KF=[[0,0,0,0,0,0,0,46],[2.5,-50,30.16,69.09,0,-80.75,0,72],[4,-50,37.3,79.24,0,-63.46,0,72],[5,-50,37.3,79.24,0,-63.46,0,46],
-[6.5,-50,30.16,69.09,0,-80.75,0,46],[9.5,0,12,62,90,-45,180,46],[12,55,21.63,81,0,-77.38,360,46],[13.5,55,29.91,90.78,0,-59.31,360,46],
-[14.5,55,29.91,90.78,0,-59.31,360,72],[16,55,21.63,81,0,-77.38,360,72],[19,0,10,70,0,-10,360,46],[21,0,10,70,0,-10,540,75,"in"],
+const KF=[[0,0,0,0,0,0,0,46],[2.5,-50,24.38,88.36,0,-67.26,0,72],[4,-50,34.73,93.67,0,-51.59,0,72],[5,-50,34.73,93.67,0,-51.59,0,46],
+[6.5,-50,24.38,88.36,0,-67.26,0,46],[9.5,0,12,62,90,-45,180,46],[12,55,17.55,97.64,0,-64.81,360,46],[13.5,55,29,103.03,0,-47.97,360,46],
+[14.5,55,29,103.03,0,-47.97,360,72],[16,55,17.55,97.64,0,-64.81,360,72],[19,0,10,70,0,-10,360,46],[21,0,10,70,0,-10,540,75,"in"],
 [23,0,10,70,0,-10,900,20,"lin"],[25,0,10,70,0,-10,1260,75,"lin"],[27,0,10,70,0,-10,1620,20,"lin"],[29,0,10,70,0,-10,1980,75,"lin"],
 [31,0,10,70,0,-10,2160,46,"out"],[34.5,0,10,70,150,-50,2520,46],[38.5,0,10,70,-150,-50,2160,46],[40.5,0,10,70,0,-10,2160,46],[43,0,0,0,0,0,2160,46]];
 const CAPS=[[0,"Grasp: the arm reaches down to the apple and the Fin Ray fingers close"],[6.5,"Carry: forearm pronation and a full wrist turn with the apple"],
@@ -234,7 +235,7 @@ $("yaw").value=Math.round(S.yaw);$("pitch").value=Math.round(S.pitch);$("roll").
 $("wp").value=Math.round(S.wp);$("wr").value=Math.round(wrap(S.wr));$("grip").value=Math.round(S.grip);ui();dirty=1;}
 $("play").addEventListener("click",()=>{if(anim)stopAnim();else startAnim();});
 ["yaw","pitch","roll","pron","wp","wr","grip"].forEach(i=>$(i).addEventListener("input",e=>{if(e.isTrusted&&anim)stopAnim();if(e.isTrusted&&cart.on){cart.S=readS();syncT();hudUpd("ok");}}));
-function ui(){const sg=+$("pitch").value,ep=+$("roll").value,ps=+$("yaw").value,ph=+$("pron").value;$("wpv").textContent=$("wp").value+"°";$("wrv").textContent=$("wr").value+"°";{const fa=+$("grip").value-CANT;$("gv").textContent=(fa>0?"+":"")+fa+"°";}$("pv").textContent=sg+"°";$("rv").textContent=ep+"°";$("yv").textContent=ps+"°";$("nv").textContent=ph+"°";const R=RB1*RB2,tA=ep+KP*ph,tB=ep-KP*ph;$("mot").textContent="Motor turns · base "+(ps*RYAW*5/360).toFixed(1)+" ("+(RYAW*5).toFixed(1)+":1) · shoulder "+(sg*RCAP/360).toFixed(1)+" ("+RCAP+":1 planetary) · elbow A "+(tA*R*5/360).toFixed(1)+", B "+(tB*R*5/360).toFixed(1)+" ("+(R*5).toFixed(0)+":1; same way = flexion, opposite = pronation). Shoulder axis "+SH.toFixed(0)+" mm above the desk.";dirty=1;}
+function ui(){const sg=+$("pitch").value,ep=+$("roll").value,ps=+$("yaw").value,ph=+$("pron").value;$("wpv").textContent=$("wp").value+"°";$("wrv").textContent=$("wr").value+"°";{const fa=+$("grip").value-CANT;$("gv").textContent=(fa>0?"+":"")+fa+"°";}$("pv").textContent=sg+"°";$("rv").textContent=ep+"°";$("yv").textContent=ps+"°";$("nv").textContent=ph+"°";const R=RB1*RB2,tA=ep+KP*ph,tB=ep-KP*ph;$("mot").textContent="Motor turns · base "+(ps*RYAW*5/360).toFixed(1)+" ("+(RYAW*5).toFixed(1)+":1) · shoulder "+(sg*RCAP/360).toFixed(1)+" ("+RCAP+":1, two NEMA23 on steel gear sectors) · elbow A "+(tA*R*5/360).toFixed(1)+", B "+(tB*R*5/360).toFixed(1)+" ("+(R*5).toFixed(0)+":1; same way = flexion, opposite = pronation). Shoulder axis "+SH.toFixed(0)+" mm above the desk.";dirty=1;}
 $("pitch").addEventListener("input",ui);["wp","wr","grip"].forEach(i=>$(i).addEventListener("input",ui));$("yaw").addEventListener("input",ui);$("pron").addEventListener("input",ui);$("roll").addEventListener("input",ui);
 [["base","Rotating base"],["electronics","Electronics and cables"],["shoulder","Shoulder drive"],["upper_arm","Upper arm"],["elbow","Elbow and cradle"],["forearm","Forearm"],["belts","Pulleys and belts"],["wrist","Wrist"],["hand","Hand"]].forEach(a=>{
 const l=document.createElement("label"),c=document.createElement("input");c.type="checkbox";c.checked=true;
@@ -259,7 +260,7 @@ if(window.matchMedia)window.matchMedia("(prefers-color-scheme: dark)").addEventL
 
 // ---------- cartesian jog: keyboard + on-screen pad; same kinematics as control/kinematics.py ----------
 const KLU=ZE,KLF=WZ-ZE,KD6=__D6__,KTIP=__TIP__,D2R=Math.PI/180,R2D=180/Math.PI;
-const KLIM=[[-170,170],[-30,90],[-60,105],[-180,180],[-90,90],[-1e9,1e9]],KNAME=["base","shoulder","elbow","pronation","wrist"];
+const KLIM=[[-170,170],[-90,90],[-60,105],[-180,180],[-90,90],[-1e9,1e9]],KNAME=["base","shoulder","elbow","pronation","wrist"];
 const kRx=d=>{const t=d*D2R,c=Math.cos(t),s=Math.sin(t);return[[1,0,0,0],[0,c,-s,0],[0,s,c,0],[0,0,0,1]];};
 const kRz=d=>{const t=d*D2R,c=Math.cos(t),s=Math.sin(t);return[[c,-s,0,0],[s,c,0,0],[0,0,1,0],[0,0,0,1]];};
 const kTz=L=>[[1,0,0,0],[0,1,0,0],[0,0,1,L],[0,0,0,1]];

@@ -95,7 +95,7 @@ ul{padding-left:20px;margin:8px 0}li{margin:3px 0;max-width:66ch}
     <h1>Arm kinematics, step by step</h1>
     <p class="sub">From the six joint angles to the fingertips, and back. The formulas are the ones in <code>control/kinematics.py</code>; the schematic robot runs them live, and each step highlights its part.</p>
   </div>
-  <div class="spec">Lu 205 · Lf 240 · d6 205.4 mm<br>shoulder 183 mm above the desk · 6 joints</div>
+  <div class="spec">Lu 229 · Lf 266 · d6 205.4 mm<br>shoulder 216 mm above the desk · 6 joints</div>
 </header>
 
 <div class="grid">
@@ -124,8 +124,8 @@ ul{padding-left:20px;margin:8px 0}li{margin:3px 0;max-width:66ch}
     <thead><tr><th>Angle</th><th>Moves</th><th>Axis</th><th>Limits</th><th>Encoder</th></tr></thead>
     <tbody>
       <tr><td><b>q1</b></td><td>base (yaw)</td><td>base z</td><td class="num">±170°</td><td>Hall sensor for homing</td></tr>
-      <tr><td><b>q2</b></td><td>shoulder</td><td>x, 183 mm above the desk</td><td class="num">−30…90°</td><td>step count</td></tr>
-      <tr><td><b>q3</b></td><td>elbow flexion</td><td>x, 205 mm from the shoulder</td><td class="num">−60…105°</td><td>AS5600 on the shaft</td></tr>
+      <tr><td><b>q2</b></td><td>shoulder</td><td>x, 216 mm above the desk</td><td class="num">−90…90°</td><td>step count</td></tr>
+      <tr><td><b>q3</b></td><td>elbow flexion</td><td>x, 229 mm from the shoulder</td><td class="num">−60…105°</td><td>AS5600 on the shaft</td></tr>
       <tr><td><b>q4</b></td><td>pronation</td><td>forearm axis</td><td class="num">±180°</td><td>AS5600 on the idler satellite</td></tr>
       <tr><td><b>q5</b></td><td>wrist pitch</td><td>x, through the wrist centre</td><td class="num">±90°</td><td>AS5600 on the axle</td></tr>
       <tr><td><b>q6</b></td><td>wrist roll</td><td>hand axis</td><td class="num">endless</td><td>AS5600 in the T fitting</td></tr>
@@ -163,11 +163,11 @@ p_wrist = ( −r·sin q1 ,  r·cos q1 ,  z )
   <p>Start from the desired grip point p and the finger direction a (the hand z axis). The wrist sits d6 further back along a:</p>
   <div class="eq">p_wrist = p − d6·a                                  = <output id="v-pw2"></output>
 q1 = atan2(−x, y)                                   = <output id="v-q1"></output>
-r = √(x² + y²)   d² = r² + z²                       d = <output id="v-d"></output> mm  <span class="c">(max 435)</span>
+r = √(x² + y²)   d² = r² + z²                       d = <output id="v-d"></output> mm  <span class="c">(max 495)</span>
 cos q3 = (d² − Lu² − Lf²) / (2·Lu·Lf)               q3 = <output id="v-q3"></output>
 q2 = atan2(r, z) − atan2(Lf·sin q3, Lu + Lf·cos q3)  q2 = <output id="v-q2"></output></div>
   <p>q3 comes from the law of cosines on the shoulder, elbow, wrist triangle (in the robot: Lu, Lf and d). There are two solutions, positive and negative q3: elbow up or elbow down. A third choice is to turn the base by 180° and lean backwards. That makes four ways to bring the wrist to the same point.</p>
-  <p>If d is more than 435 mm the point is out of reach and the cosine leaves [−1, 1]: the firmware must reject the command before moving any motor.</p>
+  <p>If d is more than 495 mm the point is out of reach and the cosine leaves [−1, 1]: the firmware must reject the command before moving any motor.</p>
 </article>
 
 <article class="step" data-s="5" id="s5">
@@ -188,7 +188,7 @@ q6 = atan2( W₂₀ , W₂₁ )                 q6 = <output id="v-q6"></output>
   <p>In three situations two joints do the same thing and the robot loses a degree of freedom. Near these poses, small grip moves ask the joints for huge rotations. The three indicators at the top of the robot show how close you are.</p>
   <ul>
     <li><b>Straight wrist (q5 = 0).</b> Pronation and roll turn about the same axis: only q4 + q6 counts. The firmware keeps the pronation still and puts everything on the roll, which is endless and so does not mind.</li>
-    <li><b>Straight arm (q3 = 0).</b> The wrist is at the edge of the workspace (435 mm from the shoulder): it cannot go further, and elbow up and elbow down coincide.</li>
+    <li><b>Straight arm (q3 = 0).</b> The wrist is at the edge of the workspace (495 mm from the shoulder): it cannot go further, and elbow up and elbow down coincide.</li>
     <li><b>Wrist above the base (r = 0).</b> The wrist centre is on the yaw axis: q1 can be anything. This is the most annoying one, to be avoided in trajectories.</li>
   </ul>
   <div class="btns">
@@ -205,11 +205,11 @@ q6 = atan2( W₂₀ , W₂₁ )                 q6 = <output id="v-q6"></output>
   <p>Base and shoulder have one motor each. Elbow and wrist are differentials: two motors drive two side bevels, and the satellite between them makes the second rotation. Turning together, they bend; turning in opposite directions, they spin.</p>
   <div class="eq"><span class="c">elbow  (5:1 gearbox, belts 160/20: 40; bevels 30/15 → kp = 0.5)</span>
 A = 40 · (−q3 + q4/2)        B = 40 · (−q3 − q4/2)
-<span class="c">wrist  (belts 78/14 = 5.571; bevels 1:1)</span>
-A = 5.571 · (q5 + q6)           B = 5.571 · (q5 − q6)
+<span class="c">wrist  (belts 100/20 = 5; bevels 1:1)</span>
+A = 5 · (q5 + q6)               B = 5 · (q5 − q6)
 <span class="c">and back</span>
 q3 = −(A+B) / (2·40)    q4 = (A−B) / 40
-q5 =  (A+B) / (2·5.571)    q6 = (A−B) / (2·5.571)</div>
+q5 =  (A+B) / (2·5)        q6 = (A−B) / (2·5)</div>
   <div class="tw"><table>
     <thead><tr><th>Motor</th><th>Ratio</th><th>Steps/degree</th><th>Rotor</th><th>Turns</th><th>Steps</th></tr></thead>
     <tbody id="v-mot"></tbody>
@@ -223,7 +223,7 @@ q5 =  (A+B) / (2·5.571)    q6 = (A−B) / (2·5.571)</div>
   <p>Everything on this page is in <code>control/kinematics.py</code> (NumPy, no other dependency). Positions are in the shoulder frame: add 183 mm for the height above the desk.</p>
   <div class="eq">from kinematics import fk, ik, hand_frame, joints_to_steps
 
-p = [252.8, 212.1, 40 - 183]       <span class="c"># grip 4 cm above the desk</span>
+p = [252.8, 212.1, 40 - 216]       <span class="c"># grip 4 cm above the desk</span>
 R = hand_frame(p, tilt=0, spin=0)  <span class="c"># fingers pointing down</span>
 q = ik(p, R, q_prev=q_now)         <span class="c"># closest solution inside the limits</span>
 steps = joints_to_steps(q)         <span class="c"># 6 integers for the TMC2209s</span></div>
@@ -243,9 +243,9 @@ steps = joints_to_steps(q)         <span class="c"># 6 integers for the TMC2209s
 
 <script>
 // ===== KINEMATICS (same as control/kinematics.py) =====
-const LU=205,LF=240,D6=205.4,SH=183;
-const RYAW=100/15*5,RSH=20,REL=5*160/20,KPEL=0.5,RWR=78/14,SPR=3200;
-const LIM=[[-170,170],[-30,90],[-60,105],[-180,180],[-90,90],[-Infinity,Infinity]];
+const LU=229,LF=266,D6=205.4,SH=216;
+const RYAW=146/15*5,RSH=10*56/20,KES=-1,REL=110/20*160/20,KPEL=0.5,RWR=100/20,SPR=3200;
+const LIM=[[-170,170],[-90,90],[-60,105],[-180,180],[-90,90],[-Infinity,Infinity]];
 const d2r=Math.PI/180,r2d=180/Math.PI;
 const wrap=a=>((a+180)%360+360)%360-180;
 function Rx(d){const t=d*d2r,c=Math.cos(t),s=Math.sin(t);return [[1,0,0,0],[0,c,-s,0],[0,s,c,0],[0,0,0,1]];}
@@ -268,7 +268,7 @@ function ikAll(p,R){const a=col(R,2);const pw=[p[0]-D6*a[0],p[1]-D6*a[1],p[2]-D6
   return {sols:out,pw};}
 function inLim(q){return q.every((v,i)=>v>=LIM[i][0]-1e-6&&v<=LIM[i][1]+1e-6);}
 function settle(s,prev){const q=s.q.slice();if(Math.abs(q[4])<1e-6){const tot=q[3]+q[5];q[3]=prev[3];q[5]=tot-q[3];}q[5]=prev[5]+wrap(q[5]-prev[5]);return q;}
-function toMotors(q){const[q1,q2,q3,q4,q5,q6]=q;return[RYAW*q1,RSH*q2,REL*(-q3+KPEL*q4),REL*(-q3-KPEL*q4),RWR*(q5+q6),RWR*(q5-q6)];}
+function toMotors(q){const[q1,q2,q3,q4,q5,q6]=q;return[RYAW*q1,RSH*q2,REL*(-q3+KPEL*q4)+KES*q2,REL*(-q3-KPEL*q4)+KES*q2,RWR*(q5+q6),RWR*(q5-q6)];}
 // ===== END KINEMATICS =====
 
 const $=id=>document.getElementById(id);
@@ -277,8 +277,8 @@ const fmt=(v,d=1)=>(Math.abs(v)<5e-11?0:v).toFixed(d).replace('-','−');
 const vec=(v,d=1)=>'('+v.map(x=>fmt(x,d)).join(', ')+')';
 
 // ---- controls ----
-const FK=[['q1','Base',-170,170],['q2','Shoulder',-30,90],['q3','Elbow',-60,105],['q4','Pronation',-180,180],['q5','Wrist pitch',-90,90],['q6','Wrist roll',-360,360]];
-const IKC=[['x','x',-600,600,'mm'],['y','y',-600,600,'mm'],['z','z above desk',-40,650,'mm'],['tilt','Tilt',0,120,'°'],['spin','Gripper spin',-180,180,'°']];
+const FK=[['q1','Base',-170,170],['q2','Shoulder',-90,90],['q3','Elbow',-60,105],['q4','Pronation',-180,180],['q5','Wrist pitch',-90,90],['q6','Wrist roll',-360,360]];
+const IKC=[['x','x',-600,600,'mm'],['y','y',-600,600,'mm'],['z','z above desk',-40,700,'mm'],['tilt','Tilt',0,120,'°'],['spin','Gripper spin',-180,180,'°']];
 function slider(id,lab,min,max,val,step){return `<div class="sl"><label for="${id}">${lab}</label><input id="${id}" type="range" min="${min}" max="${max}" step="${step}" value="${val}"><output id="${id}-o"></output></div>`;}
 $('fk-ctl').innerHTML=FK.map((f,i)=>slider('fk'+i,`<b>${f[0]}</b>${f[1]}`,f[2],f[3],S.q[i],0.5)).join('');
 $('ik-ctl').innerHTML=IKC.map(f=>slider('ik-'+f[0],f[1],f[2],f[3],S.t[f[0]],1)).join('')+
@@ -327,14 +327,14 @@ function update(){
   ['q2','q3','q4','q5','q6'].forEach((k,i)=>$('v-'+k).textContent=sel?fmt(sel.q[i+1])+'°':'—');
   if(d>LU+LF+1e-6)$('v-q3').textContent='out of reach';
   // motors
-  const m=toMotors(S.q),names=[['Base','5 · 100/15 = 33.33','--base'],['Shoulder','planetary 1:20','--l-up'],['Elbow A','40 · diff.','--l-fo'],['Elbow B','40 · diff.','--l-fo'],['Wrist A','5.571 · diff.','--l-ha'],['Wrist B','5.571 · diff.','--l-ha']];
+  const m=toMotors(S.q),names=[['Base','5 · 146/15 = 48.7','--base'],['Shoulder','10 · 56/20 = 28','--l-up'],['Elbow A','44 · diff. − q2','--l-fo'],['Elbow B','44 · diff. − q2','--l-fo'],['Wrist A','5 · diff.','--l-ha'],['Wrist B','5 · diff.','--l-ha']];
   const rat=[RYAW,RSH,REL,REL,RWR,RWR];
   $('v-mot').innerHTML=m.map((v,i)=>`<tr><td><span class="dot" style="background:var(${names[i][2]})"></span>${names[i][0]}</td><td>${names[i][1]}</td><td class="num">${fmt(rat[i]*SPR/360,2)}</td><td class="num">${fmt(v,1)}°</td><td class="num">${fmt(v/360,2)}</td><td class="num">${fmt(Math.round(v*SPR/360),0)}</td></tr>`).join('');
   // solutions
   if(S.mode==='ik'){$('sols').innerHTML=S.sols.map((s,i)=>`<button class="sol" data-i="${i}" ${s.ok?'':'disabled'} aria-pressed="${i===S.sel}">${s.lab}<br>${s.q.slice(0,6).map(v=>fmt(v,0)).join(' ')}</button>`).join('');
     $('sols').querySelectorAll('.sol').forEach(b=>b.onclick=()=>{const s=S.sols[+b.dataset.i];S.branch={flip:s.flip,elbow:s.elbow,wf:s.wf};solve();update();});
     const nok=S.sols.filter(s=>s.ok).length;
-    $('ik-note').textContent=!S.reach?`Out of reach: the wrist would have to be ${fmt(d,0)} mm from the shoulder, the maximum is 435.`:
+    $('ik-note').textContent=!S.reach?`Out of reach: the wrist would have to be ${fmt(d,0)} mm from the shoulder, the maximum is 495.`:
       `${S.sols.length} solutions, ${nok} inside the limits. `+(S.branch?'Branch picked by hand: tap another box to change it.':'Automatic choice: the closest to the current pose.');}
   draw();}
 

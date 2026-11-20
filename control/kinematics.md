@@ -1,20 +1,20 @@
 # Arm kinematics (control/kinematics.py)
 
 ## Conventions
-- The base frame has its origin on the shoulder axis, which crosses the yaw axis. z points up and the desk is at z = −183.
+- The base frame has its origin on the shoulder axis, which crosses the yaw axis. z points up and the desk is at z = −216.
 - With q = 0 the arm stands vertical; a positive shoulder angle leans it towards +y.
 - Angles are in degrees, with the same signs as the 3D viewer.
 
 | Joint | Rotation | Limits |
 |---|---|---|
 | q1 base | Rz(q1) | ±170 |
-| q2 shoulder | Rx(−q2) | −30…90 |
+| q2 shoulder | Rx(−q2) | ±90 |
 | q3 elbow | Rx(−q3) | −60…105 |
 | q4 pronation | Rz(q4) | ±180 |
 | q5 wrist pitch | Rx(q5) | ±90 |
 | q6 roll | Rz(q6) | endless |
 
-Dimensions: Lu 205, Lf 240, d6 205.4 (from the wrist centre to the grip centre; the fingertips are at about 228).
+Dimensions: Lu 229, Lf 266, d6 205.4 (from the wrist centre to the grip centre; the fingertips are at about 228).
 
 ## Forward kinematics
 T = Rz(q1)·Rx(−q2)·Tz(Lu)·Rx(−q3)·Rz(q4)·Tz(Lf)·Rx(q5)·Rz(q6)·Tz(d6)
@@ -36,19 +36,21 @@ The wrist is spherical (the axes of q4, q5 and q6 meet at the wrist centre), so:
 
 ## Singularities
 - **q5 = 0:** q4 and q6 are aligned.
-- **q3 = 0:** arm straight, at the 435 mm edge.
+- **q3 = 0:** arm straight, at the 495 mm edge.
 - **Wrist centre on the yaw axis:** q1 is undefined.
 - The rest pose (all zero) has all three at once.
 
 ## Motors
 | Motor | Rotor angle | Steps/degree (200 × 16) |
 |---|---|---|
-| Base | 33.33·q1 | 296.30 |
-| Shoulder | 20·q2 | 177.78 |
-| Elbow A | 40·(−q3 + q4/2) | 355.56 |
-| Elbow B | 40·(−q3 − q4/2) | 355.56 |
-| Wrist A | 5.571·(q5 + q6) | 49.52 |
-| Wrist B | 5.571·(q5 − q6) | 49.52 |
+| Base | 48.67·q1 | 432.59 |
+| Shoulder | 28·q2 (two motors with 10:1 gearboxes, 20T pinions, same signal) | 248.89 |
+| Elbow A | 44·(−q3 + q4/2) − q2 | 391.11 |
+| Elbow B | 44·(−q3 − q4/2) − q2 | 391.11 |
+| Wrist A | 5·(q5 + q6) | 44.44 |
+| Wrist B | 5·(q5 − q6) | 44.44 |
+
+The elbow motors are fixed to the turret, coaxial with the shoulder (inside the upper arm since v0.39): their pulleys do not turn with the upper arm, so a shoulder move turns the elbow side gears unless the elbow motors follow it (the −q2 term: the 16T pulleys on the shoulder axis are on the motor shafts).
 
 The real direction of each motor is set once in the firmware (DIR pin) at homing.
 
@@ -86,12 +88,12 @@ In joints mode, R/F move pronation, A/D the wrist pitch and Q/E the roll.
 - Near singularities the arm slows down instead of stopping. If it falls more than 20° behind, the target waits.
 - Rejected: jumps of more than 25° on base, shoulder or elbow (a branch change), and solutions outside the limits, out of reach or touching the desk.
 
-**Ready pose** (P): joints 0 / 10 / 95 / 0 / −75 / 0, fingers vertical, 258 mm from the axis and 122 mm above the desk. Entering Cartesian control from a singular pose (elbow straight or wrist above the base), the arm goes there by itself.
+**Ready pose** (P): joints 0 / 10 / 95 / 0 / −75 / 0, fingers vertical, 276 mm from the axis and 193 mm above the desk. Entering Cartesian control from a singular pose (elbow straight or wrist above the base), the arm goes there by itself.
 
 ## Reachable space in the 3D viewer
 The "Reachable space" box draws a point cloud, in three modes:
 - **All poses:** 900,000 random joint sets inside the limits. One point is kept per 15 mm cube, coloured by height.
-- **Top grasp:** the inverse kinematics with the fingers vertical, computed on a grid in the arm plane and swept by ±170°. Forwards, the hand can grasp from above between 195 and 420 mm from the base axis.
+- **Top grasp:** the inverse kinematics with the fingers vertical, computed on a grid in the arm plane and swept by ±170°. Forwards, the hand can grasp from above between about 300 and 490 mm from the base axis (grip centre 20–60 mm above the desk, joint limits only).
 - **Section:** an 18 mm thick slice on the arm plane, following the base rotation.
 
 All three modes leave out poses where the fingertips, wrist or elbow would touch the desk.

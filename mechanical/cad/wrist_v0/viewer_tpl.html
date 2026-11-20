@@ -23,7 +23,7 @@ input[type=range]{flex:1;min-width:140px;accent-color:var(--ac)}
 button{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:6px 12px}
 .mot{color:var(--mut);font-size:13px}
 </style></head><body><main>
-<h1>Robot wrist and hand (wrist v1.29, hand v2.6)</h1>
+<h1>Robot wrist and hand (wrist v1.38, hand v2.6)</h1>
 <div id="stage"><canvas id="cv"></canvas><div class="hint">Drag to orbit, pinch or scroll to zoom, Shift or right button to pan.</div></div>
 <div class="panel">
 <div class="row"><label class="l" for="pitch">Pitch</label><input id="pitch" type="range" min="-90" max="90" value="0" step="1"><span class="val" id="pv">0°</span></div>
@@ -87,9 +87,9 @@ const g=+$("grip").value,ww=SW*(g-TH0)*ZT,MH=mul(rx(p),rz(r));
 const M={fixed:I(),pitch:rx(p),idle:mul(rx(p),rz(-r)),A:rx(p+r),B:rx(p-r),roll:MH,worm:mul(MH,rz(ww))};
 parts.forEach(q=>{if(!vis[q.k])return;const mm=q.g==="finger"?mul(MH,mul(tr(q.pv),mul(rax(q.ax,g-TH0),tr([-q.pv[0],-q.pv[1],-q.pv[2]])))):M[q.g];gl.uniformMatrix4fv(loc.M,false,mm);gl.uniform1f(loc.S,q.m==null?0.15:q.m);gl.uniform3fv(loc.C,q.c);gl.bindBuffer(gl.ARRAY_BUFFER,q.buf);gl.vertexAttribPointer(loc.a,3,gl.FLOAT,false,24,0);gl.vertexAttribPointer(loc.n,3,gl.FLOAT,false,24,12);gl.drawArrays(gl.TRIANGLES,0,q.cnt);});
 }
-function ui(){const p=+$("pitch").value,r=+$("roll").value;$("pv").textContent=p+"°";$("rv").textContent=r+"°";const g=+$("grip").value;const fa=g-CANT;$("gv").textContent=(fa>0?"+":"")+fa+"°";$("mot").textContent="Bevel A: "+(p+r)+"°, bevel B: "+(p-r)+"° (the NEMA17s turn ×5.57; two AS5600 read the pitch on the axle and the roll on the roll shaft). Same direction = pitch, opposite = roll. Fingers at "+(g-CANT)+"° from vertical (0 = parallel, "+(TMIN-CANT)+" = tips touching, +"+(TMAX-CANT)+" = fully open), worm turns from fully open: "+((TMAX-g)*ZT/360).toFixed(2)+". Finger limit switch: "+(g>=SWON?"PRESSED (fingers fully open)":"free")+".";dirty=1;}
+function ui(){const p=+$("pitch").value,r=+$("roll").value;$("pv").textContent=p+"°";$("rv").textContent=r+"°";const g=+$("grip").value;const fa=g-CANT;$("gv").textContent=(fa>0?"+":"")+fa+"°";$("mot").textContent="Bevel A: "+(p+r)+"°, bevel B: "+(p-r)+"° (the NEMA17s turn ×5; two AS5600 read the pitch on the axle and the roll on the roll shaft). Same direction = pitch, opposite = roll. Fingers at "+(g-CANT)+"° from vertical (0 = parallel, "+(TMIN-CANT)+" = tips touching, +"+(TMAX-CANT)+" = fully open), worm turns from fully open: "+((TMAX-g)*ZT/360).toFixed(2)+". Finger limit switch: "+(g>=SWON?"PRESSED (fingers fully open)":"free")+".";dirty=1;}
 $("pitch").addEventListener("input",ui);$("grip").addEventListener("input",ui);$("roll").addEventListener("input",ui);
-[["bones","Ulna and radius"],["belts","Belts and tensioners"],["motors","Motors and screws"],["hand","Hand"],["flange","Flange and XIAO camera"],["cables","Cables"],["apple","Ø80 mm apple"]].forEach(a=>{
+[["bones","Ulna and radius"],["belts","Belts and tensioners"],["motors","Motors and screws"],["hand","Hand"],["flange","Flange"],["cables","Cables"],["apple","Ø80 mm apple"]].forEach(a=>{
 const l=document.createElement("label"),c=document.createElement("input");c.type="checkbox";c.checked=a[0]!=="apple";
 c.addEventListener("change",()=>{vis[a[0]]=c.checked;if(a[0]==="apple"){const gs=$("grip");gs.min=c.checked?THC:TMIN;if(+gs.value<+gs.min)gs.value=gs.min;ui();}dirty=1;});l.appendChild(c);l.appendChild(document.createTextNode(a[1]));$("chips").appendChild(l);});
 function setView(v){cam.az=VIEWS[v][0];cam.el=VIEWS[v][1];dirty=1;}

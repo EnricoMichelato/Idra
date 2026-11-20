@@ -114,6 +114,125 @@
      - **Wiring:** the cable from the flange to the camera goes from 2 to 5 wires (5 V, ground, PWM, enable, current), in the same groove.
      - **Details:** schematic, values and bench test in `electronics/hand_passive.md`.
 
+## Arm v0.46 / wrist v1.38: 'mech' bones
+- **Mech styling** on every bone, no inserts: straight facets instead of fillets and curves, windows with pointed (chevron) ends instead of round slots (`mech_slot()`, `octagon()` in both scripts).
+  - Humerus: half-octagon round the elbow, straight taper facet, straight strip, a chamfer onto the toothed disk; the teeth and the disk stay round.
+  - Cheeks: bigger and chunkier, an octagon round the stub on a faceted full-width foot (the flanks start 20 mm below the axis, out of the sweep of the low through-bolt heads) (octagon inscribed R53, corners at R57.4; was a R48 circle), with a pointed window in each flank. Still 4 mm steel, left = right.
+  - Ulna/radius (printed, flat): straight facets (no smoothing), faceted top inside the old radius round the axle, pointed windows.
+- **Wrist motors touching** (centres 21.5 mm either side, 0.7 mm apart): the forearm bones are ±45 mm in Y (were ±50); lower forearm through-bolts at ±36 mm.
+
+## Wrist v1.37: upright wrist motors
+- The wrist motors stand upright (square to the forearm), only moved 25 mm to the side; the motor screws, bearing blocks and stand-offs follow. The belts still run about 10° off the forearm axis, from the side-shifted motor pulley to the wrist pulley.
+
+## Wrist v1.36: wrist motors side by side
+- The two wrist NEMA17 no longer sit back to back: they sit **side by side**, centres 25 mm either side of the forearm plane, each screwed to its own bone through four printed stand-offs. They overlap in X, so the belt planes come in to the bevel heels: the 100T pulley starts right at the heel (no flat sleeve any more) and the forearm is **116 mm across the bones instead of 149** (flange walls 94 mm). Each belt runs about 10° off the forearm axis; motor A (ulna) at +Y, motor B (radius) at −Y, B's drive the mirror of A's, so ulna and radius stay one part.
+- The bones are a little wider in Y (±50 mm) to carry the motor screws; the lower through-bolts moved below the motors (±40, 169 mm below the wrist axis). Pitch axle Ø12 × 119, forearm through-bolts M5 × 130.
+- **Camera, XIAO and TX driver board removed from the flange** (to be added later); the TX coil and its lead holes stay.
+
+## Arm v0.45 / wrist v1.35: 400 mm belts
+- The six belts are now **400 mm (200 teeth)**, the most common closed GT2 length (380 mm is hard to find). Lengths re-chosen for equal belts and 700 mm reach: **upper arm 229 mm, forearm 266 mm** (ulna and radius 176 mm). Intermediate shafts 131.9 mm up the bone, stage-2 idlers bend the belt 10 mm (adjustment −2.5…+3.2 mm); wrist motors 137 mm below the wrist axis.
+
+## Arm v0.44 / wrist v1.34: steel cord everywhere, 20T small pulleys
+- **Every small pulley has 20 teeth** (Ø12.7), so all six belts can be steel cord: elbow drive shafts 20T, intermediate shafts 20T inside, wrist motors 20T.
+- **Elbow:** the intermediate pulley grows to 110T (Ø70, outside the bone): 110/20 × 160/20 = **44:1** (+10% torque). Stage 1 is exact at 121.6 mm, stage 2 has 85.5 mm between centres, idlers bend it 10 mm.
+- **Wrist v1.34:** 100T pulley on the side bevel with the 20T motor pulley: **5:1** (was 6:1; the motors were already at 36%). Ulna and radius 198 mm; the motors sit 127 mm below the wrist axis.
+- **Shoulder:** 20T steel pinions on the 56 bone teeth: **28:1** (was 40:1), faster and still well within the torque. The pinions are bigger, so the NEMA23 sit 7 mm lower and the shoulder axis is 216 mm above the desk (was 209).
+- **Lengths** re-chosen so the six belts stay equal and the reach stays 700 mm: upper arm 207 mm, forearm 288 mm.
+
+## Arm v0.43 / wrist v1.33: six equal belts
+- **All six belts are GT2 10 mm, 190 teeth (380 mm):** elbow stage 1 and stage 2 on both sides, and the two wrist belts. One spare fits everywhere.
+- To get there the upper arm is shorter and the forearm longer, with the reach unchanged at 700 mm: **upper arm 226 mm (was 255), forearm 269 mm (was 240)**. The intermediate shafts sit 140.5 mm up the bone (stage 1 exact with 190T); stage 2 has 85.5 mm between centres and its idlers, now 25 mm above the intermediate shaft, bend the belt about 10 mm (adjustment −2.6…+3.4 mm).
+- **Wrist v1.33:** ulna and radius 179 mm (were 150) to make room for the longer belt; the wrist motors sit 139 mm below the wrist axis (were 122). The belt pulley is 2 mm bigger in radius than the bevel heel: 84 teeth, wrist ratio 6:1 (was 5.57:1, +8% torque). The back-side tensioners push 7 mm (were 5). Lower forearm through-bolts moved to 164 mm below the wrist axis.
+- Viewer keyframes re-solved for the same targets.
+
+## Arm v0.42: shoulder as low as it goes
+- **The shoulder gearboxes stand straight on the turntable** (turntable top = underside of the 60 mm gearbox flanges). The printed motor block is now a 30 mm frame round the motors and gearboxes (face walls with the backlash slots, bolts down, end faces for the cheeks); its top stays below the reach of the toothed bone disks. Shoulder axis 209 mm above the desk (was 240), cheeks 30 mm shorter.
+- **Printed cheek feet:** a wedge-shaped foot outside the bottom of each steel cheek, 2 × M5 from below into the turntable and 4 × M4 through the cheek into inserts: a wide footing for the thin plate.
+- Viewer pick-and-place keyframes re-solved for the same targets above the desk.
+
+## Arm v0.41: steel cheeks, cable through the motor block
+- **Cheeks waterjet-cut from the same 4 mm steel as the upper-arm bones**, left and right the same part (each has both gearbox shaft holes), M4 tapped for the stub flanges. Much stiffer in their plane than the 15 mm printed ones and no creep; the shoulder is 186 mm across the stage-1 pulleys (was 208). Stubs 15 mm shorter.
+- **Cable:** it no longer goes through the cheek and the stub. It rises from the yaw spindle along the open channel of the shoulder motor block, between the two NEMA23, into a window in the bottom of the right elbow motor bracket, up inside the bracket beside the coupling, and out of the top window into the arm as before (10–17 mm from the shoulder axis).
+- Waiting for Enrico: common intermediate axle and tensioning with the four through-bolts (belts inside the bolts), which depend on whether stage 1 stays outside the bones.
+
+## Arm v0.40: two belt stages instead of the elbow gearboxes, narrow upper arm again
+- **Elbow motors without gearbox**, still inside the upper arm, back to back on the shoulder axis and fixed to the turret: a printed bracket (face plate + tube with a 688 in a spider) screwed with 4 × M3 to the inner end of the stub. A jaw coupling drives a Ø8 shaft through the stub; a second 688 sits in a printed bushing at the outer end of the stub; the 16T pulley is outside the cheek.
+- **Stage 1 outside the bone:** 16T → 80T (5:1), 180-tooth belt (360 mm), to an intermediate shaft 130 mm up the bone. The shaft turns in two 688 in a printed hub on the outer face of the bone, clamped by 2 × M4 in slots: sliding the hub tensions stage 1.
+- **Stage 2 inside:** 20T on the intermediate shaft → 160T side pulley (8:1), 224-tooth belt (448 mm), tensioned by the two through-bolts with two toothed idlers each, 40 mm above the intermediate shaft (adjustment −1.5…+2.1 mm of belt). 5 × 8 = 40:1 as before. The motor mixing now adds −1 × shoulder angle (the 16T is on the motor shaft).
+- **Narrow again:** without the gearboxes the motors take ±40.5 mm, so the bones go back to the minimum set by the shoulder unit: 139 mm across (v0.39: 235). The elbow is the v0.38 one again (side bevel and 160T in one piece, pin Ø12 × 145). Shoulder 208 mm across the stage-1 pulleys.
+- **Cable:** up the right cheek into the stub, along the top of the bore past the spider (its three spokes leave the top free), out of a window in the top half of the right motor bracket 10–17 mm from the axis, up beside the motor and over to the middle of the arm, below the intermediate shafts.
+- No elbow gearboxes: about 0.6 kg off the turret, no gearbox backlash; the elbow encoder is on the joint anyway.
+
+## Arm v0.39: elbow motors inside the arm, wide upper arm, 700 mm reach
+- **Elbow motors inside the upper arm**, back to back on the shoulder axis with the shafts outward, still fixed to the turret: each gearbox face is screwed to a printed bracket that runs under the 20T pulley (where the belts never go: the arm swings ±90°, the belts stay in the upper half) and is screwed with 3 × M3 to the bottom of the inner end of the fixed stub. The pulley sits straight on the gearbox shaft: the v0.38 couplings, Ø8 shafts, spiders and 688 are gone. The shoulder coupling in the motor mixing stays (−5 × shoulder angle on both elbow motors).
+- **Wide upper arm:** the motor stack (39 + 41 mm, plate, pulley) puts the belt planes at ±93.5 mm, so the bones are 227 mm apart inside (235 outside, was 139). The elbow is as wide: the 160T pulleys move out to the belt planes on a long sleeve of the side gear (one printed part with the bevel), and are separate printed parts screwed to a collar of the sleeve (3 × M3), so both print flat. Elbow shaft Ø12 × 238. The shoulder is 278 mm across the stub flanges (was about 360 with the motors outside).
+- **Upper arm 255 mm** (was 205): reach 700 mm to the grip centre. Elbow belts 350 teeth (700 mm). The bone taper now follows the elbow (`taper` measured from the elbow axis). The tensioner bolts moved to 150 mm below the elbow (mid-span): there the idlers push each strand out by 11.6 mm for 350 teeth, and sliding the bolt ±3 mm changes the belt by −1.0…+1.3 mm (v0.38 had only −0.2…+0.6).
+- **Cable:** up the right cheek into the right stub as before, then out of the stub end into the gap left on purpose between the right pulley and the bone (5.5 mm), up to 44 mm above the axis, across the belt plane inside its loop and up the middle of the arm. It crosses the joint 10–14 mm from the axis.
+- Pick-and-place keyframes of the viewer animation re-solved with the inverse kinematics for the longer arm (same grip targets).
+- **Numbers:** see STATUS (shoulder 28% at 500 g, 56% on one motor; elbow and wrist unchanged).
+
+## Arm v0.38: elbow motors on the shoulder axis, slim upper arm, printed cheeks
+- **Elbow motors outside the cheeks, coaxial with the shoulder** (on the turret, they do not move with the arm). Each geared NEMA17 sits on a printed mount on its cheek; a coupling and a Ø8 shaft through the hollow fixed stub (688 in a printed spider at its inner end) carry a 20T pulley in the belt plane of its side, on the shoulder axis. One belt per side straight to the 160T elbow pulley: 300 teeth (600 mm), both the same. Ratio still 40:1. The pulleys do not turn with the arm, so a shoulder move turns the elbow side gears: the motor mixing adds −5 × shoulder angle to both elbow motors (`control/kinematics.py`, `K_ES`).
+- Considered and dropped: elbow motors in front of and behind the turret with a two-stage belt (the pulley on the shoulder axis must clear the Ø50 stub, which leaves little ratio for the belts and keeps the shoulder tall), and internal teeth in a window of the bone (the pinion moves toward the axis, so the ring would have to be about Ø200 to keep the shoulder gearboxes out of the arm's way).
+- **Upper arm:** only the two belts, four toothed idlers and four through-bolts. The two tensioner bolts (one per side, mid-way up) each carry two idlers inside the belt loops, one per belt, so sliding a bolt tensions both belts equally. The two plain bolts sit near the shoulder, inside the loops.
+- **Shoulder:** 10:1 planetaries on the short NEMA23 and 56 teeth on the bones (Ø112): 40:1. The gearboxes sit just below the reach of the belts when the arm swings ±90°. Shoulder axis 240 mm above the desk. The bones are a straight 80 mm strip with a toothed foot (R8 fillet) and the R33 elbow end; truss slots: an X of two diagonal slots between the tensioners, three slanted slots round the bearing. Bearings 6810 on Ø50 hollow stubs.
+- **Cheeks printed in PETG-CF**, 15 mm, with M4 inserts for the stub flange and the elbow motor mount; the right one has the cable channel inside, from the bottom to the stub. Only the two steel upper-arm bones are still cut.
+- **Numbers:** moving mass on the shoulder 4.6 kg (was 6.4). With 500 g: shoulder 24% of its torque (48% with one motor), elbow 41%, wrist 38%. Sag 1.6 mm. The shoulder is about 36 cm wide across the elbow motors.
+- **Checked:** arm interference in 8 poses; belts and cables, including the arm cable against the turret-side drive parts at ±90°; kinematics with the new coupling.
+
+## Arm v0.37: proportions, truss slots, printed forearm (wrist v1.32)
+- The mechanics stay as in v0.36 (Enrico chose to keep the elbow motors low and the teeth in the bones); this pass is about looks.
+- **Upper-arm bones, true teardrop:** the outline leaves the gear disk just before the first tooth and narrows in one smooth curve (a cubic tangent to the disk and to the R33 elbow end) instead of a disk, a strip and a small fillet.
+- **Truss slots:** diagonal elongated slots instead of round holes. Upper arm: a zigzag of two slots along the neck and a ring of five slanted slots in the gear disk; forearm: a V of two slots under the pitch bearing and a slot each side of the motors. Every slot keeps 5 mm from the edge and from every hole; the two bones of each pair are still one part.
+- **Shoulder lifted from the base:** the printed motor block has a 30 mm taller pedestal, so the shoulder axis is 268.5 mm above the desk (was 238.5). The cheeks are slimmer: a 28 mm web down to 75 mm below the axis, then a concave flare onto the block.
+- **Wrist fully printed (v1.32):** ulna and radius are now 10 mm PETG-CF plates (were 6 mm aluminium), with the motor stand-offs and the through-bolt tubes printed too. Only bearings, shafts, belts, pulleys, motors and screws are bought. The forearm through-bolts become M5 × 160, the motor screws M3 × 40.
+- **Through-bolts of the upper arm:** the plain pair moved to (±41, 70) to fit inside the narrower neck.
+- **Checked:** arm interference in 8 poses, wrist in 4 poses, kinematics.
+
+## Arm v0.36: elbow motors back beside the shoulder bearings, Ø320 base in quadrants
+- **Elbow motors next to the shoulder bearings** (Enrico did not like them high up): side by side again, 32 mm above the shoulder axis, as in v0.34; equal belts of 270 teeth (540 mm). For them to clear the shoulder gearboxes over ±90°, the gearboxes moved 24 mm further from the axis: the teeth cut in the steel bones went from 60 to **82** (Ø164), shoulder ratio **29.3:1**, shoulder **238.5 mm** above the desk. The bones (874 g each) are wider at the shoulder (strip 112 mm at the gear, fillet R10) to hold the motors' carrier feet and the low through-bolts.
+- Upper-arm through-bolts: the two tensioners as before, the two plain ones moved beside the belts (±46, 66 mm), clear of the motors and of the cheeks.
+- **Base Ø320** (was 250): turntable and foot each in **four identical quadrants** (160 × 160 on the bed), joined by half-laps with M3 into inserts; every hole pattern is 4-fold symmetric. The turntable quadrants sit on a printed hub (spindle + flange) and are tied by the hub, the one-piece ring gear (8 screws, two per quadrant) and the shoulder motor block bolts. The foot quadrants are tied by the floor laps, a tab on each wall joint and the four desk lugs, which now sit on the joints. Each foot quadrant has one window in the middle of its wall; four different printed panels go in them (front: e-stop + display; I/O; vents; fan). Four rim rollers, one on the wall top of each quadrant, at R145. The deck stays one piece (Ø248) on eight pilasters.
+- **Ring gear 146 teeth** (module 1.5, Ø239 printed in one piece, still fits the bed): base ratio 48.7:1 (was 40). The home sensor moved inside the ring teeth (R95).
+- **Numbers:** shoulder at 37% of its torque with 500 g (was 54%: more ratio, elbow motors back near the axis), elbow 43%, wrist 39%. Moving mass on the shoulder 6.6 kg. Sag 1.6 mm.
+- **Checked:** arm interference in 8 poses (shoulder ±90°); quadrants against each other, the hub and the panels; kinematics.
+
+## Arm v0.35: geared shoulder, steel upper-arm bones, through-bolts (wrist v1.31)
+- **Shoulder range ±90°** (Enrico meant ±90, not ±180).
+- **Geared shoulder motors:** two short NEMA23 (56 mm) each behind a 5:1 planetary (60 square, Ø14 output), side by side under the axis, facing opposite ways. 14-tooth module 2 steel pinion on 60 teeth: 5 × 60/14 = 21.4:1. The gear is now Ø120 instead of Ø312, the motors sit 74 mm from the axis and the **shoulder is 215 mm above the desk** (was 312). The gearbox output bearings take the tooth force, so the pinion supports on the cheeks are gone. **No brake for now**: motor, gearbox and brake would not fit between the cheeks; a mechanical brake on the bones is to come. The two motors driven slightly against each other also take out the gearbox backlash.
+- **Upper-arm bones in 4 mm steel with the teeth cut in:** no separate sectors and no sector screws; the teeth are concentric with the 6806 bore because they come from the same cut. 618 g each (was 959 g aluminium + 889 g sector). The two bones are still one part. Outline: the Ø120 gear (teeth only on the lower arc, plain toward the arm), an R10 fillet into a strip 86 mm wide that widens to 100 mm at the tensioners, then the R33 elbow end as before. 24 round lightening holes in mirror pairs.
+- **Elbow motors higher:** side by side at 108 mm from the shoulder axis, out of the reach of the shoulder motors when the arm swings ±90°. The two elbow belts are 200 teeth (400 mm), a common length, 107 mm centre distance.
+- **Through-bolts instead of covers:** 8 in all, M5 × 150 with aluminium tubes between the bones: in the upper arm the two tensioners (one per side, each carrying its belt idler) and two plain ones low down; in the forearm four, two per side beside the wrist motors. All covers are gone for now.
+- **Forearm bones** widen to 74 mm below the pulleys to carry the through-bolts (171 g each); still one part for both sides.
+- **Numbers:** moving mass on the shoulder 6.1 kg (was 8.5). With 500 g the shoulder uses 54% of its torque in the worst pose (was 43%: the big sectors used to balance part of the arm, and the elbow motors moved up the arm), elbow 43%, wrist 39%. One shoulder motor alone is no longer enough (108%). Sag under 500 g 1.7 mm.
+- **Checked:** interference in 8 arm poses including the shoulder at +90°, −90° and −60°; belts and the arm cable against everything; wrist and kinematics checks.
+
+## Arm v0.34: symmetry pass (teardrop bones, module-2 sectors, equal belts)
+- **Elbow motors side by side** ("shoulder to shoulder"), both 32 mm above the shoulder axis, 22.5 mm either side of the arm centre line, facing opposite ways. The whole upper arm is symmetric under a half turn about its own axis, so:
+  - the two elbow belts are the same: 270 teeth (540 mm) each, 174 mm centre distance (were 268 and 336);
+  - the two upper-arm bones are **one part**, the right one is the left one turned over (one DXF, quantity 2);
+  - the two gear sectors are **one part** too.
+- **Shoulder gears, module 2:** 12-tooth steel pinion on a 156-tooth waterjet-cut steel sector (pitch Ø312), still 13:1. One arc of 295° for both sectors, symmetric about the downward direction and open toward the arm, 9 × M5 countersunk into each bone.
+- **Shoulder range ±130°** (was −30…90). ±180° is not possible: past about ±135° the elbow reaches the turntable and the tensioner heads reach the cheek. Above 130° the sector would also have to close its gap, where the bone runs into the strip.
+- **Teardrop bones:** a Ø302 disk around the shoulder axis that carries the sector, a 66 mm strip to the elbow end (R33, as before, for the elbow range), and an R40 concave fillet between them. 16 round lightening holes; 959 g each.
+- **Shoulder 55 mm higher:** 312 mm above the desk (was 257), because the module-2 pinions sit 168 mm from the axis. Turntable top unchanged in shape, moved down with the motors.
+- **Through-bolts instead of covers:** five Ø12 aluminium standoffs (countersunk M5 at both ends) and two M5 through-bolts that are also the belt tensioners: each carries one smooth idler between two tubes and slides in a slot cut in both bones. The printed upper-arm covers are gone for now.
+- **Countersunk everything** through the upper-arm bones except the two tensioner bolts, so nothing stands proud where the bones turn past the cheeks. The cheek web is narrow down to 80 mm below the axis for the same reason.
+- **Ulna and radius are one part** (wrist v1.30): both get the cable notch and the encoder holes.
+- **Numbers:** moving mass on the shoulder 8.5 kg with the forearm (upper arm 6.0 kg, of which 1.9 kg bones and 1.8 kg steel sectors, mostly round the axis and opposite the arm). Shoulder at 43% of its torque with 500 g, elbow 42%, wrist 39%. Sag under 500 g 1.7 mm (elbow belts 0.54).
+- **Checked:** interference in 8 arm poses including the shoulder at +130°, −130° and −100°; belts and the arm cable against everything; wrist and kinematics checks.
+
+## Arm v0.33: symmetric shoulder with two motors, no spring
+- **Two NEMA23 under the shoulder axis** (76 mm, 8 mm shaft, power-off brake), side by side and facing opposite ways. Each drives its own bone: a 13-tooth steel pinion on a 169-tooth laser-cut steel gear sector, 6 mm, bolted to the inner face of the bone with 5 × M5 countersunk. Ratio 13:1. Both bones get the same torque.
+- **No spring:** the balancer (cable, pulleys, spring, bracket, anchor) is gone. With 500 g the shoulder uses 44% of the available torque in the worst pose, because the gear sectors and their bone lobes sit opposite the arm and the elbow motors are balanced about the axis. A brake on each motor holds the arm when the power goes.
+- **Backlash:** each motor face sits in four slots along the line pinion → gear centre. Set the mesh with the arm upright. Driving the two motors a few tenths of a degree against each other removes the play.
+- **Pinion support:** the far end of each motor shaft runs in a 688 in a printed puck on the cheek, so the tooth force (about 160 N at full motor torque) does not hang on the motor bearings.
+- **Bones on fixed stubs:** each upper-arm bone turns on a 6806 around a hollow aluminium stub (Ø30, bore 20) held by a 6 mm aluminium cheek. The cheeks are laser cut like the bones and screwed to the end faces of the printed motor block (two halves, one per motor, split by the open cable channel). The cables enter the arm through the right stub, on the axis.
+- **Shoulder 74 mm higher:** the axis is now 257 mm above the desk (was 183), the room needed for the motors under the gear sectors. The width over the stub flanges is 168 mm.
+- **Elbow motors one above and one below the shoulder axis** (+33 and −37 mm along the arm, were +118 and +73). Belts 268 and 336 teeth (were 190 and 230). Their B idlers moved down to 35 mm from the shoulder, under the covers. The longer belts are softer: the elbow belts now give 0.63 mm of the 1.8 mm sag under 500 g (0.39 before), while the shoulder gives 0.10 mm (0.32 before).
+- **Base as large as the bed allows:** turntable Ø248 (was 230), foot Ø250 (was 236), 120-tooth ring gear (was 100): base ratio 40:1 (was 33.3:1). Rim rollers at 110 mm (were 98).
+- **Checked:** gear mesh in four shoulder angles (the pinions turn 13 times the shoulder in the model and the viewer), interference in 5 arm poses, cables at three shoulder angles.
+
 ## Wrist v1.29: PCB coils
 - **Coils on printed circuit boards:** 4-layer ring boards Ø43.6 / Ø15.6 × 1.6 mm (`electronics/coil_pcb.py`: TX20, RX24, spare RX28), each backed by two rings of 0.3 mm flexible ferrite sheet. They replace the hand-wound Litz coils in ferrite cups: a cup of that size with a hole for the shaft is not a catalogue part, and boards are the same every time.
 - **Pockets** in the flange boss and the hand bottom are now 2.4 mm deep (were 3.5); the coil faces stay 1 mm apart and 3 mm above the 6810.

@@ -18,22 +18,24 @@ Conventions (identical to the 3D viewer and the arm_v0 / wrist_v0 CAD):
 """
 import numpy as np
 
-# --- dimensions from the CAD (arm v0.32 / wrist v1.29 / hand v2.6) ---------
-LU = 205.0          # shoulder -> elbow
-LF = 240.0          # elbow -> wrist centre
+# --- dimensions from the CAD (arm v0.46 / wrist v1.38 / hand v2.6) ---------
+LU = 229.0          # shoulder -> elbow (v0.45: 700 mm reach with the 266 mm forearm)
+LF = 266.0          # elbow -> wrist centre (v0.45)
 D6 = 205.4          # wrist centre -> grip centre (fingertips at ~228)
-SHOULDER_H = 183.0  # shoulder axis above the desk
+SHOULDER_H = 216.0  # shoulder axis above the desk (gearboxes on the turntable, 20T pinions, arm v0.44)
 
 # --- transmissions ----------------------------------------------------------
-R_YAW = 100 / 15 * 5    # base: 5:1 planetary on the motor, then 100-tooth ring / 15-tooth pinion
-R_SH = 20.0             # shoulder: 20:1 steel planetary on the NEMA23
-R_EL = 5 * 160 / 20     # elbow: 5:1 planetary on each motor, then 160/20 belts on the side bevels
+R_YAW = 146 / 15 * 5    # base: 5:1 planetary on the motor, then 146-tooth ring / 15-tooth pinion
+R_SH = 10 * 56 / 20     # shoulder: two NEMA23 + 10:1 planetaries, 20T steel pinions on 56 teeth cut in the steel bones (v0.44)
+K_ES = -1.0             # elbow motors per degree of shoulder: their 16T pulleys sit on the shoulder axis, fixed to the turret,
+                        # so turning the shoulder turns the elbow pulleys relative to the arm (see arm_v0 elbow drive, v0.40)
+R_EL = 110 / 20 * 160 / 20  # elbow: two belt stages, 20T -> 110T outside the bone, 20T -> 160T inside (v0.44: 44:1)
 KP_EL = 0.5             # elbow: 30/15 bevels -> half a side-gear turn per satellite turn
-R_WR = 78 / 14          # wrist: 78/14 belts, 1:1 bevels
+R_WR = 100 / 20         # wrist: 100/20 belts (v1.34: 20T motor pulleys for steel-cord belts), 1:1 bevels
 STEPS_REV = 200 * 16    # steps per turn with 16 microsteps
 
 LIMITS = {  # degrees (q6 endless)
-    'q1': (-170, 170), 'q2': (-30, 90), 'q3': (-60, 105),
+    'q1': (-170, 170), 'q2': (-90, 90), 'q3': (-60, 105),
     'q4': (-180, 180), 'q5': (-90, 90), 'q6': (-np.inf, np.inf),
 }
 
@@ -165,8 +167,8 @@ def joints_to_motors(q):
     return np.array([
         R_YAW * q1,                         # base
         R_SH * q2,                          # shoulder
-        R_EL * (-q3 + KP_EL * q4),          # elbow A  (side gear A = -q3 + q4/2)
-        R_EL * (-q3 - KP_EL * q4),          # elbow B
+        R_EL * (-q3 + KP_EL * q4) + K_ES * q2,   # elbow A  (side gear A = -q3 + q4/2), plus the shoulder coupling
+        R_EL * (-q3 - KP_EL * q4) + K_ES * q2,   # elbow B
         R_WR * (q5 + q6),                   # wrist A  (side gear A = q5 + q6)
         R_WR * (q5 - q6),                   # wrist B
     ])
@@ -174,6 +176,7 @@ def joints_to_motors(q):
 
 def motors_to_joints(m):
     m1, m2, eA, eB, wA, wB = m
+    eA, eB = eA - K_ES * m2 / R_SH, eB - K_ES * m2 / R_SH            # remove the shoulder coupling first
     return np.array([
         m1 / R_YAW,
         m2 / R_SH,

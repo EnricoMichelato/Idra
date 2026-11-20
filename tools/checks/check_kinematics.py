@@ -8,7 +8,7 @@ from kinematics import Rx,Rz,Tz
 rng=np.random.default_rng(1)
 # 1) viewer replica: piv(m)=T(ZE) m T(-ZE); fore=Yw Ms Ec piv(rz(ph)); MW=fore T(WZ); MH=MW rx(wp) rz(wr)
 def viewer(q):
-    ps,sg,ep,ph,wp,wr=q; ZE=205; WZ=435
+    ps,sg,ep,ph,wp,wr=q; ZE=K.LU; WZ=K.LU+K.LF
     piv=lambda m: Tz(ZE)@m@Tz(-ZE)
     fore=Rz(ps)@Rx(-sg)@piv(Rx(-ep))@piv(Rz(ph))
     return fore@Tz(WZ)@Rx(wp)@Rz(wr)@Tz(K.D6)
@@ -49,4 +49,4 @@ print('steps/deg', [round(r*K.STEPS_REV/360,2) for r in (K.R_YAW,K.R_SH,K.R_EL,K
 R=K.hand_frame([100,300,-100],30,20); print('orth',np.abs(R.T@R-np.eye(3)).max(),np.linalg.det(R))
 # workspace
 print('reach wrist',K.LU+K.LF,'grip max',K.LU+K.LF+K.D6)
-q=[-50,37.3,79.24,0,-63.46,0]; T=K.fk(q); print('anim pick grip',T[:3,3].round(2), 'z desk',round(T[2,3]+K.SHOULDER_H,1), 'zaxis',T[:3,2].round(3))
+q=[-50,34.73,93.67,0,-51.59,0]; T=K.fk(q); print('anim pick grip',T[:3,3].round(2), 'z desk',round(T[2,3]+K.SHOULDER_H,1), 'zaxis',T[:3,2].round(3))

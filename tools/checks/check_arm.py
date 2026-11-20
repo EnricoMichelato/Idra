@@ -1,7 +1,7 @@
 """Interference check of the whole arm in one or more poses (tests every pair that involves a moving part).
 
-    python3 tools/checks/check_arm.py                       # the standard set of poses (slow: about 5 min per pose)
-    python3 tools/checks/check_arm.py 60,90,105,120,-60,45  # yaw, shoulder, elbow, pronation, wrist pitch, wrist roll (deg)
+    python3 tools/checks/check_arm.py                       # the standard set of poses (slow: 1-2 min per pose after a 2 min build; includes the shoulder at +-90)
+    python3 tools/checks/check_arm.py 60,90,105,120,-60,45  # shoulder, elbow, pronation, base yaw, wrist pitch, wrist roll (deg)
 
 Exit code 1 if anything clashes. Cables are drawn approximately and are left out.
 """
@@ -9,7 +9,8 @@ import sys
 from _common import clashes
 import arm_v0 as A
 
-POSES = ('0,0,0,0,0,0', '60,90,105,120,-60,45', '-30,-60,90,-170,90,0', '45,30,-60,90,-90,170', '90,60,0,-170,45,0')
+POSES = ('0,0,0,0,0,0', '60,90,105,120,-60,45', '-30,-60,90,-170,90,0', '45,30,-60,90,-90,170', '90,60,0,-170,45,0',
+         '90,-60,0,30,0,0', '-90,60,-90,0,45,0', '-60,-45,0,0,0,0')
 MOVING = ('foot_', 'yaw_', 'arm_', 'cradle_', 'forearm_', 'elbow_', 'idle_', 'W_')
 
 

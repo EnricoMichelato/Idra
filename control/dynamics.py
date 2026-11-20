@@ -25,14 +25,14 @@ MOTORS = ('base', 'shoulder', 'elbow A', 'elbow B', 'wrist A', 'wrist B')
 # torque: usable torque at low speed with a TMC2209 (Nm); corner: speed where torque starts to fall (rev/s, 24 V);
 # rotor: rotor inertia (kg m2); eta: efficiency of the transmission after the motor
 MOTOR = {
-    'base':     dict(torque=0.35, corner=10.0, rotor=5.4e-6, eta=0.85),   # NEMA17 + 5:1 planetary (95%) + printed ring gear (90%)
-    'shoulder': dict(torque=1.26, corner=6.0,  rotor=3.0e-5, eta=0.90),   # NEMA23 at 2.8 A (TMC5160 or external driver) + 20:1 steel planetary
-    'elbow A':  dict(torque=0.30, corner=10.0, rotor=6.0e-6, eta=0.80),   # salvaged 40 mm NEMA17 (0.30 Nm assumed) + 5:1 planetary + belt + bevels
+    'base':     dict(torque=0.35, corner=10.0, rotor=5.4e-6, eta=0.85),   # NEMA17 + 5:1 planetary (95%) + printed 120T ring gear (90%)
+    'shoulder': dict(torque=1.70, corner=6.0,  rotor=6.0e-5, eta=0.855),  # TWO 56 mm NEMA23 (0.85 Nm usable each) + 10:1 planetary (90%) + 56/20 steel spur (95%)
+    'elbow A':  dict(torque=0.30, corner=10.0, rotor=6.0e-6, eta=0.80),   # salvaged 40 mm NEMA17 (0.30 Nm assumed) + two belt stages (20->110, 20->160) + bevels
     'elbow B':  dict(torque=0.30, corner=10.0, rotor=6.0e-6, eta=0.80),
     'wrist A':  dict(torque=0.40, corner=10.0, rotor=5.4e-6, eta=0.85),   # 40 mm NEMA17 (salvaged ones: measure them)
     'wrist B':  dict(torque=0.40, corner=10.0, rotor=5.4e-6, eta=0.85),
 }
-BALANCER = 7.0      # Nm: shoulder gravity balancer (cable + spring). Its torque is BALANCER * sin(q2), against gravity; 0 = not fitted
+BALANCER = 0.0      # Nm: shoulder gravity balancer (cable + spring). Its torque is BALANCER * sin(q2), against gravity; 0 = not fitted (arm v0.46)
 SAFE = 0.6          # use at most this fraction of the available torque: a stepper that stalls loses its position
 
 # m = JM q  (motor angles from joint angles)
@@ -162,7 +162,8 @@ def fastest(qa, qb, links, limit=SAFE):
 def static_scan(links, step=15):
     """worst static motor load over the joint ranges"""
     worst = np.zeros(6); at = [None]*6; tq = np.zeros(6); z = np.zeros(6)
-    for q2 in range(-30, 91, step):
+    q2lo, q2hi = K.LIMITS['q2']
+    for q2 in range(int(q2lo), int(q2hi) + 1, step):
         for q3 in range(-60, 106, step):
             for q4 in (-90, 0, 90):
                 for q5 in (-90, -45, 0, 45, 90):
@@ -176,8 +177,8 @@ def static_scan(links, step=15):
 
 
 VARIANTS = [   # (name, shoulder motor torque, elbow motor torque, balancer torque in Nm)
-    ('arm v0.32 as designed, with the shoulder balancer', 1.26, 0.30, 7.0),
-    ('without the balancer', 1.26, 0.30, 0.0),
+    ('arm v0.46 as designed: two short NEMA23 with 10:1 planetaries on the steel bones, elbow motors inside the arm on the shoulder axis with two belt stages (no gearbox), 255 mm upper arm, no spring', 1.70, 0.30, 0.0),
+    ('one shoulder motor only (the other unpowered or failed)', 0.85, 0.30, 0.0),
 ]
 
 
@@ -227,15 +228,15 @@ def report(payloads=(0.0, 0.2, 0.5)):
             L.append(f'| {name} | {T:.2f} | {MOTORS[int(np.argmax(u))]} |')
         L.append('')
     apply_variant(VARIANTS[0], 0.0)
-    L += ['## The balancer', '',
-          '- A cable from a lobe of the left bone (40 mm from the shoulder axis, opposite the arm) runs over a pulley 54 mm under the axis and on to a spring on the turntable.',
-          '- With the cable length set so that the spring force is proportional to the lobe-to-pulley distance, the torque is exactly 7.0 Nm x sin(shoulder angle): the same shape as gravity.',
-          '- It carries the part of the load that depends only on the shoulder angle (8.5 Nm empty, 9.5 Nm with 500 g). The rest depends on the elbow and stays with the motor.',
-          '- With the arm empty and the forearm folded back, the spring slightly over-balances: the motor then holds the arm down, with a few Nm.', '']
+    L += ['## The shoulder drive', '',
+          '- Two 56 mm NEMA23, each behind a 5:1 planetary, under the shoulder axis, side by side and facing opposite ways. Each drives its own bone through a 14-tooth steel pinion on 56 teeth (module 2) cut in the 4 mm steel bone itself, behind 10:1 planetaries: 40:1 in all, the two bones loaded the same. Shoulder range ±90°.',
+          '- There is no spring and, for now, no brake: the arm drops when the power goes. A mechanical brake on the bones is still to be designed.',
+          '- The two elbow motors (no gearbox) sit inside the upper arm, back to back on the shoulder axis and fixed to the turret; stage 1 runs outside the bones to an intermediate shaft half-way up: their weight does not load the shoulder at all; the shoulder coupling is in the motor mixing.',
+          '- With the two motors driven a little against each other (a few tenths of a degree), the backlash of the gear teeth disappears.', '']
     L += ['## Assumptions', '',
-          '- Printed parts: PETG, 4 walls, 40% infill (55% of solid mass); gears 85%. Aluminium bones at 2.7 g/cm3. Motors: NEMA17 280 g, 5:1 gearbox 300 g, geared NEMA23 1.8 kg, hand gearmotor 91 g.',
-          '- Usable motor torque: NEMA17 40 mm: 0.30 Nm at the elbow (salvaged, behind a 5:1 gearbox), 0.40 Nm (wrist), 0.35 Nm (base); NEMA23 1.26 Nm at 2.8 A. Corner speed 10 and 6 rev/s at 24 V.',
-          '- Efficiency: shoulder planetary 90%, elbow planetary + belt + bevels 80%, wrist belt + bevels 85%, base planetary + ring gear 85%. Friction helps when holding still; it is counted against the motor anyway.',
+          '- Printed parts: PETG, 4 walls, 40% infill (55% of solid mass); gears 85%. Aluminium bones at 2.7 g/cm3. Motors: NEMA17 280 g, 5:1 gearbox 300 g, NEMA23 56 mm 0.70 kg + 10:1 planetary 0.75 kg (on the turntable), hand gearmotor 91 g.',
+          '- Usable motor torque: NEMA17 40 mm: 0.30 Nm at the elbow (salvaged, two belt stages, no gearbox), 0.40 Nm (wrist), 0.35 Nm (base); NEMA23 0.85 Nm each (56 mm, about 1.26 Nm holding). Corner speed 10 and 5 rev/s at 24 V.',
+          '- Efficiency: shoulder planetary + spur gears 85%, elbow two belts + bevels 80%, wrist belt + bevels 85%, base planetary + ring gear 85%. Friction helps when holding still; it is counted against the motor anyway.',
           '- Worst pose: every combination of shoulder, elbow, pronation and wrist pitch in 15° steps, hand above the desk.',
           '- The pick point is on the desk, 400 mm in front of the base, fingers down. Moves are quintic profiles in joint space.', '']
     return '\n'.join(L), res

@@ -16,10 +16,9 @@ import wrist_v0 as W
 CAD = os.path.join(ROOT, 'mechanical/cad')
 OUT = os.path.join(CAD, 'out/wrist_kit')
 WRIST = ('carrier_flange', 'carrier_wall_', 'gear_A_pulley', 'gear_C_output', 'idle_gear_D', 'T_fitting', 'motor_block_', 'enc_pitch_bracket',
-         'camera_mount', 'forearm_cover_', 'forearm_base_plate')
+         'camera_mount', 'forearm_base_plate', 'ulna', 'radius', 'tube_bolt', 'standoff_')
 EXTRA = {  # name in the wrist model -> (file name, copies, normal that goes up on the bed)
-    'ulna': ('ulna_printed_x1.stl', (1, 0, 0)), 'radius': ('radius_printed_x1.stl', (1, 0, 0)),
-    'spacer_ulna_1_alu': ('motor_standoff_7x24_x8.stl', (1, 0, 0)), 'idler_A_spacer': ('idler_sleeve_9x10_x2.stl', (1, 0, 0)),
+    'idler_A_spacer': ('idler_sleeve_9x10_x2.stl', (1, 0, 0)),
     'carrier_spacer_L': ('axle_spacer_ring_1.5_x2.stl', (1, 0, 0)),
 }
 
@@ -43,7 +42,7 @@ def main():
         sh = flat(parts[name], up); b = sh.BoundingBox()
         cq.exporters.export(cq.Workplane('XY').newObject([sh]), os.path.join(OUT, 'print/temporary', fn), tolerance=0.03, angularTolerance=0.2)
         print(f'{fn:34s} {b.xlen:6.1f} x {b.ylen:6.1f} x {b.zlen:5.1f}'); n += 1
-    for f in ('ulna_6mm.dxf', 'radius_6mm.dxf'): shutil.copy(os.path.join(CAD, 'out/laser', f), os.path.join(OUT, 'laser', f))
+    for f in (): shutil.copy(os.path.join(CAD, 'out/laser', f), os.path.join(OUT, 'laser', f))
     for f in ('hand_passive.md', 'rx_hand.svg', 'tx_flange.svg'): shutil.copy(os.path.join(ROOT, 'electronics', f), os.path.join(OUT, 'electronics', f))
     cp = os.path.join(ROOT, 'electronics/coil_pcb')                      # PCB coils: README, ready-to-upload Gerber zips, pictures, KiCad
     os.makedirs(os.path.join(OUT, 'electronics/coil_pcb'))

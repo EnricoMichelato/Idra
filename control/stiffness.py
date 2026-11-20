@@ -14,7 +14,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 G = 9.81
 LU, LF, D6 = K.LU/1000, K.LF/1000, K.D6/1000
 
-E = dict(PETG=2.0e9, PETG_CF=5.0e9, PA_CF=7.0e9, aluminium=69e9)       # Pa
+E = dict(PETG=2.0e9, PETG_CF=5.0e9, PA_CF=7.0e9, aluminium=69e9, steel=205e9)       # Pa
 SEAT = 1.0e7           # N/m, radial stiffness of a ball bearing in a printed seat (guess)
 BELT_EA = dict(gt2_10=2.0e4, gt2_15=3.0e4, gt2_10_steel=6.0e4)        # N, belt tensile stiffness (guess: fibreglass GT2 about 2 kN per mm of width)
 STEPPER_POLES = 50     # a 1.8 deg stepper holds like a spring: torque = T_hold * sin(50 * angle)
@@ -25,34 +25,37 @@ def beam_tip(F, M, L, EI):
     return F*L**3/(3*EI) + M*L**2/(2*EI), F*L**2/(2*EI) + M*L/EI
 
 
-def budget(payload=0.5, bone='aluminium', bone_t=0.006, belt='gt2_10_steel', pron_span=0.019, rollers=True, wrist_belt=None):
+def budget(payload=0.5, bone='steel', bone_t=0.004, fore='PETG_CF', fore_t=0.010, belt='gt2_10_steel', pron_span=0.019, rollers=True, wrist_belt=None):
     F = payload*G
     reach = LU + LF + D6
     rows = []                                              # (element, drop at the grip in mm, note)
 
     # --- base: tilting of the turntable -----------------------------------------------------
     M0 = F*reach
-    if rollers: k_tilt = 1.5*2.0e6*0.098**2               # three rollers at 98 mm, 2e6 N/m each on printed posts (guess)
+    if rollers: k_tilt = 2.0*2.0e6*0.145**2               # four rollers at 145 mm, 2e6 N/m each on printed posts (guess)
     else: k_tilt = SEAT*0.025**2/2                         # only the two spindle bearings, 25 mm apart
     rows.append(('base tilt', M0/k_tilt*reach, 'rim rollers' if rollers else 'spindle bearings only'))
 
-    # --- shoulder: gearbox wind-up + the stepper acting as a spring -----------------------------
-    k_gb = 2.5/math.radians(1/60)                          # 2.5 Nm per arcmin (typical 60 mm planetary; guess)
-    k_m = 1.26*STEPPER_POLES*K.R_SH**2
-    rows.append(('shoulder gearbox + motor', M0*(1/k_gb + 1/k_m)*reach, '20:1 planetary'))
+    # --- shoulder: two steppers acting as springs, through steel spur gears ---------------------
+    k_mesh = 2*8.0e7*0.1056**2                             # two steel meshes, 6 mm face (about 13 N/um per mm of face; guess)
+    k_shaft = 2*3.0e6*0.1056**2                            # pinion shaft + support puck + cheek, per side (guess)
+    k_m = 2*1.26*STEPPER_POLES*K.R_SH**2                   # two 56 mm NEMA23, 1.26 Nm holding each (gearbox stiffness not counted)
+    rows.append(('shoulder gears + two motors', M0*(1/k_mesh + 1/k_shaft + 1/k_m)*reach, '10:1 planetary + 56/20 steel spur, two NEMA23'))
 
-    # --- upper arm: the right bone is driven, the left one follows through the covers ---------
-    EI = E[bone]*bone_t*0.075**3/12                        # one plate, 75 mm mean width, bending in its own plane
+    # --- upper arm: both bones are driven (one motor each) ------------------------------------
+    EI = E[bone]*bone_t*0.075**3/12                        # one plate, 75 mm (conservative: the strip is 66 wide, the root much wider), bending in its own plane
     Me = F*(LF + D6)
-    d, s = beam_tip(F, Me, LU, EI*1.6)                     # the covers make the left plate carry about 60% of a full share
+    d, s = beam_tip(F, Me, LU, EI*2.0)                     # two plates, each driven at its root
     rows.append(('upper arm bones', d + s*(LF + D6), f'{bone}, {bone_t*1000:.0f} mm'))
 
     # --- elbow: belts, steppers, bevel teeth ---------------------------------------------------
     r_p = 160*0.002/(2*math.pi)                            # pitch radius of the 160-tooth pulley
-    k_belt = 2*BELT_EA[belt]/0.125*r_p**2                  # two belts, 125 mm tight span
-    k_m = 1/(1/(2*0.30*STEPPER_POLES*K.R_EL**2) + 1/(2*1.0/math.radians(1/60)))   # steppers behind 5:1 gearboxes (1 Nm/arcmin each, guess)
+    k_belt = 2*BELT_EA[belt]/0.097*r_p**2                          # stage 2: two equal belts, 125 mm centre distance (intermediate shaft -> elbow, v0.40)
+    k_belt1 = (160/20)**2*2*BELT_EA[belt]/0.132*(110*0.002/(2*math.pi))**2   # stage 1 (20T -> 110T outside the bones), seen at the elbow
+    k_m = 2*0.30*STEPPER_POLES*K.R_EL**2                   # steppers straight on the belts (no gearbox since v0.40)
     k_teeth = 2*2.0e6*0.040**2                             # printed module 3 teeth, two meshes (guess)
-    rows.append(('elbow belts', Me/k_belt*(LF + D6), belt))
+    rows.append(('elbow belts, stage 2', Me/k_belt*(LF + D6), belt))
+    rows.append(('elbow belts, stage 1', Me/k_belt1*(LF + D6), belt))
     rows.append(('elbow motors + bevel teeth', Me*(1/k_m + 1/k_teeth)*(LF + D6), ''))
 
     # --- pronation bearings in the cradle ----------------------------------------------------
@@ -60,15 +63,15 @@ def budget(payload=0.5, bone='aluminium', bone_t=0.006, belt='gt2_10_steel', pro
     rows.append(('pronation bearing pair', Mp/(SEAT*pron_span**2/2 + 3000.0)*(LF + D6 - 0.06), f'{pron_span*1000:.0f} mm apart'))   # + the 6810 on its own (guess)
 
     # --- forearm bones --------------------------------------------------------------------------
-    EI = 2*E[bone]*bone_t*0.050**3/12
-    d, s = beam_tip(F, F*D6, 0.176, EI)
-    rows.append(('forearm bones', d + s*D6, f'{bone}, {bone_t*1000:.0f} mm'))
+    EI = 2*E[fore]*fore_t*0.060**3/12                       # two printed plates, about 60 mm wide on average
+    d, s = beam_tip(F, F*D6, 0.202, EI)                    # v1.35: longer forearm bones
+    rows.append(('forearm bones', d + s*D6, f'{fore}, {fore_t*1000:.0f} mm'))
 
     # --- wrist: belts, steppers -----------------------------------------------------------------
     wb = wrist_belt or belt
-    r_w = K.R_WR*14*0.002/(2*math.pi)
+    r_w = K.R_WR*20*0.002/(2*math.pi)
     Mw = F*D6
-    rows.append(('wrist belts', Mw/(2*BELT_EA[wb]/0.100*r_w**2)*D6, wb))
+    rows.append(('wrist belts', Mw/(2*BELT_EA[wb]/0.137*r_w**2)*D6, wb))
     rows.append(('wrist motors', Mw/(2*0.40*STEPPER_POLES*K.R_WR**2)*D6, ''))
 
     # --- hand on its bearings -------------------------------------------------------------------
@@ -78,11 +81,10 @@ def budget(payload=0.5, bone='aluminium', bone_t=0.006, belt='gt2_10_steel', pro
 
 
 CASES = [
-    ('as designed (v0.30): aluminium bones, steel-cord belts, bearings 19 mm apart', dict()),
-    ('v0.29: PETG bones, fibreglass GT2 belts, bearings 9 mm apart', dict(bone='PETG', bone_t=0.010, belt='gt2_10', pron_span=0.009)),
-    ('v0.30 with ordinary fibreglass GT2 belts', dict(belt='gt2_10')),
-    ('v0.30 with printed PETG bones', dict(bone='PETG', bone_t=0.010)),
-    ('v0.30 without the rim rollers', dict(rollers=False)),
+    ('as designed (v0.46): steel upper-arm bones, printed PETG-CF forearm bones, two-stage steel-cord elbow belts, two geared NEMA23', dict()),
+    ('with ordinary fibreglass GT2 belts', dict(belt='gt2_10')),
+    ('with aluminium 6 mm forearm bones instead of printed', dict(fore='aluminium', fore_t=0.006)),
+    ('without the rim rollers', dict(rollers=False)),
 ]
 
 

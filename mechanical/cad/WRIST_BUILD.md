@@ -1,6 +1,6 @@
-# Wrist and hand: bench build (wrist v1.29, hand v2.6)
+# Wrist and hand: bench build (wrist v1.38, hand v2.6)
 
-Everything needed to build the forearm, the wrist differential and the hand alone, on the bench, before the rest of the arm exists.
+Everything needed to build the forearm, the wrist differential and the hand alone, on the bench, before the rest of the arm exists. Since wrist v1.32 the whole forearm and wrist structure is printed (PETG-CF): only bearings, shafts, belts, pulleys, motors and screws are bought.
 `python3 tools/wrist_kit.py` collects the files into `mechanical/cad/out/wrist_kit/`.
 
 Nothing here has been built yet. Bought-part sizes are catalogue figures: **buy first, measure, then print the parts around them.**
@@ -33,14 +33,16 @@ Settings as in `PRINT_LIST.md`: structural parts in PETG or PETG-CF (0.2 mm, 4 p
 |---|---|---|---|
 | `carrier_flange_x1.stl` | 1 | structural | flange plate: ring-bearing boss, TX coil pocket (2.4 mm) with two lead holes, 6 inserts in its sides |
 | `carrier_wall_L_x1.stl`, `carrier_wall_R_x1.stl` | 1 + 1 | structural | flange walls, 3 countersunk M3 each |
-| `gear_A_pulley_one_piece_x2.stl` | 2 | gear | side bevel 24T + 78T pulley |
+| `gear_A_pulley_one_piece_x2.stl` | 2 | gear | side bevel 24T + 100T pulley |
 | `gear_C_output_x1.stl` | 1 | gear | roll bevel, D bore on the roll shaft |
 | `idle_gear_D_24T_x1.stl` | 1 | gear | idler bevel |
 | `T_fitting_x1.stl` | 1 | structural | carries the idler pin and the lower roll bearing |
 | `motor_block_A_x1.stl`, `motor_block_B_x1.stl` | 1 + 1 | structural | 625 bearing for each motor shaft, on the inner face of the bone |
-| `forearm_cover_front_x1.stl`, `forearm_cover_back_x1.stl` | 1 + 1 | structural | **needed**: they tie the two bones together |
 | `forearm_base_plate_x1.stl` | 1 | structural | the bones screw onto it; on the bench it is the stand (screw it to a board through its three M3 holes, or clamp it) |
-| `enc_pitch_bracket_x1.stl`, `camera_mount_x1.stl` | 1 + 1 | structural | only when encoders and camera go on |
+| `enc_pitch_bracket_x1.stl` | 1 | structural | only when the pitch encoder goes on (the camera and the TX driver board are left off the flange for now, v1.36) |
+| `ulna_x1.stl`, `radius_x1.stl` | 1 + 1 | structural | the forearm bones: ulna and radius are the same part turned over (either file twice), 176 mm long since v1.35, wider since v1.36 to carry the side-by-side motors, 10 mm thick with diagonal truss slots. **PETG-CF, 6 perimeters, 100% infill**, flat on the bed |
+| `standoff_ulna_1_x8.stl` | 8 | structural | motor stand-offs, 100% infill |
+| `tube_bolt_fore_1_x4.stl` | 4 | structural | tubes of the four through-bolts that tie the bones, 100% infill |
 
 ### Hand (`print/hand/`)
 `hand_body`, `hand_head`, `hand_palm` (dome), `hand_finger_1`, `hand_finger_2` (× 2), and the three TPU `hand_finger_flex_*`. Details in `hand_print_notes.md`.
@@ -48,31 +50,28 @@ Settings as in `PRINT_LIST.md`: structural parts in PETG or PETG-CF (0.2 mm, 4 p
 ### Temporary or optional (`print/temporary/`)
 | File | Qty | Notes |
 |---|---|---|
-| `ulna_printed_x1.stl`, `radius_printed_x1.stl` | 1 + 1 | the two bones, 6 mm, printed flat. PETG-CF if possible, 6 perimeters, 100% infill |
-| `motor_standoff_7x24_x8.stl` | 8 | motor stand-offs, 100% infill (or aluminium spacers) |
 | `idler_sleeve_9x10_x2.stl` | 2 | between bone and belt idler |
 | `axle_spacer_ring_1.5_x2.stl` | 2 | on the pitch axle, between each flange wall and the bearing in the bone |
 
-**Printed bones:**
-- They are much less stiff than aluminium, so the belt pull bends them a little. Keep the belt tension moderate and always fit the two covers.
-- The two Ø2.5 holes for the pitch-encoder bracket are tapped in aluminium; in plastic an M3 screw cuts its own thread.
-- The 6801 seats are 6 mm deep, one bearing wide: glue the bearings with a drop of Loctite 638 or cyanoacrylate.
-- The DXFs for the aluminium version are in `laser/`.
+**Printed bones (the design since wrist v1.32, no aluminium version any more):**
+- 10 mm of PETG-CF is still several times less stiff than 6 mm aluminium, so the belt pull bends them a little. Keep the belt tension moderate and always fit the four through-bolts. The whole arm sags about 0.1 mm more under 500 g than with aluminium bones (`control/stiffness_report.md`).
+- The two Ø2.5 holes for the pitch-encoder bracket: an M3 screw cuts its own thread in the plastic.
+- The 6801 seats go through the 10 mm plate: glue the bearings with a drop of Loctite 638 or cyanoacrylate.
 
 ## Buy: mechanical
 
 | Part | Qty | Notes |
 |---|---|---|
 | NEMA17, about 40 mm, 5 mm shaft | 2 | the salvaged ones; measure body length and shaft length (the CAD assumes 39 and 20 mm) |
-| GT2 pulley, 14 teeth, 5 mm bore, for 10 mm belt | 2 | check bore and that it has two set screws; 16 teeth also works if the script is changed back |
-| Closed GT2 belt, 10 mm wide, 340 mm (170 teeth) | 2 | **fibreglass (Gates) is the safer choice for a first build**: steel cord bends badly round a 14-tooth pulley |
+| GT2 pulley, 20 teeth, 5 mm bore, for 10 mm belt | 2 | check bore and that it has two set screws |
+| Closed GT2 belt, 10 mm wide, **steel cord**, 400 mm (200 teeth) | 2 | the same belt as the four elbow belts; the 20-tooth motor pulleys are big enough for steel cords |
 | Smooth idler, 5 mm bore, for 10 mm belt, about Ø12, with bearings | 2 | belt tensioners |
 | 6801-2RS, 12 × 21 × 5 | 8 | 4 in the side bevels, 2 in the bones, 2 on the roll shaft |
 | 688-2RS, 8 × 16 × 5 | 2 | idler bevel |
 | 625-2RS, 5 × 16 × 5 | 2 | motor shaft blocks |
 | 6810 (61810), 50 × 65 × 7 | 1 | ring bearing between flange and hand |
 | F6-12M thrust ball bearing, 6 × 12 × 4.5 | 1 | worm thrust, in the palm dome |
-| Ground steel shaft Ø12 h6 × 143 | 1 | pitch axle; file three 1 mm flats for the grub screws (two walls, T fitting) |
+| Ground steel shaft Ø12 h6 × 119 | 1 | pitch axle; file three 1 mm flats for the grub screws (two walls, T fitting) |
 | **Non-magnetic** shaft Ø12 × 59 (304 stainless or 7075 aluminium) | 1 | roll shaft: 2 mm flat 22 mm long under bevel C, 1 mm flat at the hub end |
 | Steel pin Ø8 × 20 | 1 | idler bevel pin |
 | Dowel pins Ø5 × 32 | 3 | finger pins |
@@ -89,15 +88,16 @@ Settings as in `PRINT_LIST.md`: structural parts in PETG or PETG-CF (0.2 mm, 4 p
 ### Screws and inserts
 | Part | Qty | Where |
 |---|---|---|
-| M3 heat-set inserts (Ø4.0 hole) | 50 | cover tabs 12, forearm base 8, flange plate 6, hand turret 6, motor blocks 4, hand hub seat 4, camera and TX board 4, hand body 3 |
-| M3 × 35 + washer | 8 | motors, through bone and 24 mm stand-off (about 4.5 mm of thread in the motor: check the hole depth) |
-| M3 × 16 | 8 | bones on the forearm base |
+| M3 heat-set inserts (Ø4.0 hole) | 34 | forearm base 8, flange plate 6, hand turret 6, motor blocks 4, hand hub seat 4, hand body 3 |
+| M3 × 40 + washer | 8 | motors, through the 10 mm bone and the 24 mm stand-off (about 4.5 mm of thread in the motor: check the hole depth) |
+| M3 × 20 | 8 | bones on the forearm base |
 | M3 × 12 countersunk | 6 | flange walls on the flange plate |
-| M3 × 10 | 30 | covers 12, hand dome 6, motor blocks 4, camera and TX board 4, encoder bracket 2 |
+| M3 × 10 | 14 | hand dome 6, motor blocks 4, encoder bracket 2 |
 | M3 × 8 | 7 | hand hub 4, hand head on body 3 |
 | M3 × 6 | 2 | gear motor face |
 | M3 × 6 grub screws | 3 | flange walls 2, T fitting 1 |
 | M5 × 35 + flange nut | 2 + 2 | belt idlers, in the slots of the bones |
+| M5 × 130 button head (or M5 threaded rod) + flange nut | 4 + 4 | through-bolts between ulna and radius, with the printed tubes |
 | M2 × 10 | 2 | micro switch |
 | M3 × 25 + nut + large washers | 6 | Fin Ray fingers on their roots |
 
@@ -158,9 +158,9 @@ The coils are **printed circuit boards**: 4-layer rings made by `electronics/coi
 ## Assembly order
 
 1. Inserts everywhere (list above). Bearings into the bones, the side bevels and the motor blocks.
-2. Motors on the bones with stand-offs and M3 × 35; 14-tooth pulleys; motor blocks on the inner face of the bones over the shaft ends.
-3. Wrist stack on the Ø12 × 143 axle: T fitting with idler bevel in the middle, the two side bevels with bearings, shims and wave springs, then the two flange walls, the 1.5 mm rings, and the bones outside. Belts on before the walls close.
-4. Bones onto the forearm base (M3 × 16), idlers into their slots, covers on.
+2. Motors on the bones with stand-offs and M3 × 40; 20-tooth pulleys; motor blocks on the inner face of the bones over the shaft ends.
+3. Wrist stack on the Ø12 × 119 axle: T fitting with idler bevel in the middle, the two side bevels with bearings, shims and wave springs, then the two flange walls, the 1.5 mm rings, and the bones outside. Belts on before the walls close.
+4. Bones onto the forearm base (M3 × 16), the four through-bolts with their tubes, idlers into their slots.
 5. TX coil stack into the flange plate pocket (ferrite, adhesive, board), leads through the two holes. Flange plate between the walls (3 countersunk M3 per side). Roll shaft up through the T fitting bearing and the flange, bevel C on its flat.
 6. Ring bearing on the flange boss; hand as in `hand_print_notes.md`; hand hub clamped on the roll shaft.
 7. Belt tension: the strand deflects about 2 mm under a firm finger push.
@@ -168,7 +168,7 @@ The coils are **printed circuit boards**: 4-layer rings made by `electronics/coi
 ## Bench tests
 
 1. **By hand, no belts:** pitch and roll turn freely, no tight spots over a full roll turn. Adjust shims until the bevels have just perceptible backlash.
-2. **Motors:** both the same way gives pitch, opposite ways gives roll (5.57 motor turns per joint turn). Check ±90° pitch and several roll turns in each direction.
+2. **Motors:** both the same way gives pitch, opposite ways gives roll (5 motor turns per joint turn). Check ±90° pitch and several roll turns in each direction.
 3. **Backlash:** block the motor pulleys and measure the play at the fingertip (205 mm from the wrist centre). This is the number that decides whether the printed bevels are good enough.
 4. **Belts:** stall the flange by hand and check that no belt jumps a tooth.
 5. **Hand:** grip force on a scale, then lift a full 0.5 l bottle and shake it with the power off.

@@ -40,27 +40,27 @@ More: **[kinematics, step by step](https://enricomichelato.github.io/Idra/kinema
   - **Wrist:** pitch and roll, with its motors placed near the elbow so there is less weight at the tip.
 - **Bones on the outside.** The aluminium plates are the outermost parts at every joint, like an insect's shell; the elbow cradle and the wrist flange turn between them.
 - **Joint encoders.** Four AS5600 sensors read elbow flexion and pronation, wrist pitch and roll directly.
-- **Built from scripts.** Four laser-cut aluminium plates and about 60 printed parts that fit a 256 × 256 mm bed. Every part comes from CadQuery scripts, and a fit test coupon tunes bearing seats and holes to your printer.
+- **Built from scripts.** Waterjet-cut steel and aluminium plates and about 50 printed parts that fit a 256 × 256 mm bed. Every part comes from CadQuery scripts, and a fit test coupon tunes bearing seats and holes to your printer.
 
 ## Numbers
 
 | | |
 |---|---|
 | Axes | 6: base, shoulder, elbow, pronation, wrist pitch, endless wrist roll |
-| Lengths | upper arm 205 mm, forearm 240 mm; grip centre 205 mm from the wrist centre |
-| Reach | about 650 mm to the grip; shoulder axis 183 mm above the desk |
-| Target payload | 500 g (spring gravity balancer on the shoulder) |
-| Structure | laser-cut 6 mm aluminium bones (`mechanical/cad/LASER_CUT.md`), printed PETG / PETG-CF for the rest |
-| Motors | NEMA23 with a 20:1 steel planetary at the shoulder, 5 × NEMA17 (base 33.3:1 and elbow 40:1 with 5:1 planetaries, wrist 5.57:1), 25 mm metal gear motor in the hand |
+| Lengths | upper arm 229 mm, forearm 266 mm; grip centre 205 mm from the wrist centre |
+| Reach | about 700 mm to the grip; shoulder axis 216 mm above the desk |
+| Target payload | 500 g, no springs |
+| Structure | bones in identical pairs with diagonal truss slots: upper arm and shoulder cheeks waterjet-cut 4 mm steel, with the shoulder teeth cut in the bones (`mechanical/cad/LASER_CUT.md`), forearm printed PETG-CF; through-bolts instead of covers; printed PETG / PETG-CF for the rest |
+| Motors | 2 × NEMA23 with 10:1 planetaries at the shoulder, on teeth cut in the steel bones (28:1, one per bone, ±90°), 5 × NEMA17 (base 48.7:1 with a 5:1 planetary, elbow 44:1 through two belt stages, wrist 5:1), 25 mm metal gear motor in the hand |
 | Grip | about 16 N per finger, holds 1 kg by friction (estimate) |
-| Electronics | ESP32-S3 + 6 × TMC2209 in the base; XIAO ESP32S3 Sense with camera on the wrist flange |
+| Electronics | ESP32-S3 + 6 × TMC2209 in the base; a camera on the wrist is planned |
 | Reference printer | Elegoo Centauri Carbon |
 
 ## Status
 
 | Part | Status |
 |---|---|
-| CAD: arm v0.32, wrist v1.29, hand v2.6 | 58 printed parts with oriented STLs, 4 laser-cut aluminium bones with DXFs, every joint has its fasteners; nothing built yet |
+| CAD: arm v0.46, wrist v1.38, hand v2.6 | about 50 printed parts with oriented STLs, 2 DXFs (steel upper-arm bones and cheeks, 4 plates), every joint has its fasteners; nothing built yet |
 | Forward and inverse kinematics, joints → motors | done and verified (`control/`) |
 | Hand electronics | schematic with starting values, bench test pending |
 | Firmware | not started |
