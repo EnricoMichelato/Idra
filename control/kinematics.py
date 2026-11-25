@@ -18,20 +18,21 @@ Conventions (identical to the 3D viewer and the arm_v0 / wrist_v0 CAD):
 """
 import numpy as np
 
-# --- dimensions from the CAD (arm v0.46 / wrist v1.38 / hand v2.6) ---------
-LU = 229.0          # shoulder -> elbow (v0.45: 700 mm reach with the 266 mm forearm)
-LF = 266.0          # elbow -> wrist centre (v0.45)
-D6 = 205.4          # wrist centre -> grip centre (fingertips at ~228)
+# --- dimensions from the CAD (arm v0.47 / wrist v1.38 / hand v3.0) ---------
+LU = 249.0          # shoulder -> elbow (v0.50: 130T elbow pulleys with the same 400 mm belts; v0.45: 229)
+LF = 235.8          # elbow -> wrist centre (v0.50: forearm on a thrust bearing, motors on the base plate, 100T wrist pulleys)
+D6 = 196.0          # wrist centre -> grip centre (wrist v1.40: 32/24 bevels, flange 6 mm lower; hand v3.0)
 SHOULDER_H = 216.0  # shoulder axis above the desk (gearboxes on the turntable, 20T pinions, arm v0.44)
 
 # --- transmissions ----------------------------------------------------------
 R_YAW = 146 / 15 * 5    # base: 5:1 planetary on the motor, then 146-tooth ring / 15-tooth pinion
 R_SH = 10 * 56 / 20     # shoulder: two NEMA23 + 10:1 planetaries, 20T steel pinions on 56 teeth cut in the steel bones (v0.44)
-K_ES = -1.0             # elbow motors per degree of shoulder: their 16T pulleys sit on the shoulder axis, fixed to the turret,
+K_ES = -1.0             # elbow motors per degree of shoulder: their 20T pulleys sit on the shoulder axis, fixed to the turret,
                         # so turning the shoulder turns the elbow pulleys relative to the arm (see arm_v0 elbow drive, v0.40)
-R_EL = 110 / 20 * 160 / 20  # elbow: two belt stages, 20T -> 110T outside the bone, 20T -> 160T inside (v0.44: 44:1)
-KP_EL = 0.5             # elbow: 30/15 bevels -> half a side-gear turn per satellite turn
-R_WR = 100 / 20         # wrist: 100/20 belts (v1.34: 20T motor pulleys for steel-cord belts), 1:1 bevels
+R_EL = 110 / 20 * 130 / 20  # elbow: two belt stages, 20T -> 110T and 20T -> 130T, both inside the bones (v0.50; 35.75:1)
+KP_EL = 15 / 28         # elbow: 28/15 bevels (v0.50) -> 15/28 of a side-gear turn per satellite turn
+R_WR = 100 / 20         # wrist: 100/20 belts
+KP_WR = 24 / 32         # wrist: 32T side bevels, 24T roll gear (wrist v1.40) -> 24/32 of a side-gear turn per roll turn
 STEPS_REV = 200 * 16    # steps per turn with 16 microsteps
 
 LIMITS = {  # degrees (q6 endless)
@@ -169,8 +170,8 @@ def joints_to_motors(q):
         R_SH * q2,                          # shoulder
         R_EL * (-q3 + KP_EL * q4) + K_ES * q2,   # elbow A  (side gear A = -q3 + q4/2), plus the shoulder coupling
         R_EL * (-q3 - KP_EL * q4) + K_ES * q2,   # elbow B
-        R_WR * (q5 + q6),                   # wrist A  (side gear A = q5 + q6)
-        R_WR * (q5 - q6),                   # wrist B
+        R_WR * (q5 + KP_WR * q6),           # wrist A  (side gear A = q5 + 0.75 q6)
+        R_WR * (q5 - KP_WR * q6),           # wrist B
     ])
 
 
@@ -183,7 +184,7 @@ def motors_to_joints(m):
         -(eA + eB) / (2 * R_EL),
         (eA - eB) / (2 * KP_EL * R_EL),
         (wA + wB) / (2 * R_WR),
-        (wA - wB) / (2 * R_WR),
+        (wA - wB) / (2 * KP_WR * R_WR),
     ])
 
 

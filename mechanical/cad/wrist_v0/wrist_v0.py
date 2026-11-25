@@ -1,5 +1,5 @@
 """
-Wireless Robot Arm - wrist + hand (v1.24: steel roll shaft, bones bolted to the forearm base, stand-offs printed with the bones, idler tensioners = M5 + nut in a slot; v1.23: passive hand, no MCU (frequency-commanded DRV8871); v1.22: rounded flange, chunky cross; v1.21: matte black PLA, flush idle bevel on a pin, roll encoder at the roll-shaft end; v1.20: one fit file, 12 mm pitch axle on 6801, 688 idler like the elbow; v1.16: round lightening holes; v1.15: cables; v1.14: one back-side tensioner per belt, flange ears wrap the bearing ends; v1.13: wider flange over the hand, one tapered slot per plate; v1.12: spiral bevels, idle 4th bevel, AS5600 on pitch and roll,
+Wireless Robot Arm - wrist + hand (v1.39: active hand v3.0 with the STS3215 servo, Ø80 hand plate; v1.24: steel roll shaft, bones bolted to the forearm base, stand-offs printed with the bones, idler tensioners = M5 + nut in a slot; v1.23: passive hand, no MCU (frequency-commanded DRV8871); v1.22: rounded flange, chunky cross; v1.21: matte black PLA, flush idle bevel on a pin, roll encoder at the roll-shaft end; v1.20: one fit file, 12 mm pitch axle on 6801, 688 idler like the elbow; v1.16: round lightening holes; v1.15: cables; v1.14: one back-side tensioner per belt, flange ears wrap the bearing ends; v1.13: wider flange over the hand, one tapered slot per plate; v1.12: spiral bevels, idle 4th bevel, AS5600 on pitch and roll,
 axle turning with the flange, side-gear preload, pot-core style inductive link raised above the 6810, TX driver on the flange;
 10 mm ulna/radius, ribbed covers, NEMA17 wrist motors near the elbow, Fin Ray hand v2.2, XIAO camera)
 Parametric CadQuery generator. Run:  python3 wrist_v0.py   (build, interference check, export to ./out)
@@ -9,7 +9,7 @@ Frame: origin = apex of the three bevel gears (crossing of pitch and roll axes)
 import os, itertools, math
 import cadquery as cq
 from cq_gears import BevelGearPair
-from hand_v2 import build_hand, H as HAND
+from hand_v3 import build_hand, H as HAND
 import sys as _sys
 _sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'common'))
 from fit import FIT, seat as fseat, boss as fboss, R_INS3, R_INS5, R_M3, R_M5, R_TAP3
@@ -21,28 +21,28 @@ P = dict(
     ring_id=50.0, ring_od=65.0, ring_w=7.0, ring_shoulder=0.6,   # 6810 ring bearing around the coils
     motor_shaft_len=20.0,
     # bevel differential (1:1), spiral (helix) 20 deg; side gears A/B are the same part
-    module=2.0, teeth=24, face=11.0, pressure=20.0, helix=20.0, backlash=0.15,
+    module=2.0, teeth=32, teeth_out=24, face=13.0, pressure=20.0, helix=35.0, backlash=0.15,   # v1.40: side gears 32T (as big as the 100T pulleys), roll gear 24T
     # idle 4th bevel D opposite the output C: on 2x 686 (6x13x5) on a 6 x 1 steel tube pressed in the T fitting
     idle_brg=(16.0, 8.0, 5.0), idle_pin=(8.0, 0.0),          # 2x 688 on a solid Ø8 steel pin (same bearing as the elbow idler)
     # axial preload of the side gears (as in the elbow): shim on the pulley-end 688 inner ring + 8x12 wave spring
     pre_shim=(15.2, 0.8), pre_spring=(18.0, 2.2),             # same shim / 12x18 wave spring as the elbow
-    shaft_d=12.0, bore_d=12.2, hub_d=20.0, hub_len=5.0,      # pitch axle 12 mm like the elbow pin
+    shaft_d=12.0, bore_d=12.2, hub_d=20.0, hub_len=1.0,      # pitch axle 12 mm like the elbow pin
     # 688ZZ bearings on the static axle
     brg_od=21.0, brg_id=12.0, brg_w=5.0,                    # 6801 everywhere on the pitch axle (was 688)
     # carrier (flange), outside ulna and radius
-    wall_t=8.0, wall_gap=1.0, carrier_y=76.0, plate_t=10.0, wall_down=14.0,     # 76 wide: covers the Ø70 hand
+    wall_t=10.0, wall_gap=1.0, carrier_y=80.0, plate_t=8.0, wall_down=14.0,     # 76 wide: covers the Ø70 hand
     ear_r=22.0, car_fillet=8.0,                              # ear wraps the bearing end of ulna/radius (R25)                              # flange walls: round 'ear' around the bearing + R8 inner fillet
     # eye-in-hand camera: Seeed XIAO ESP32S3 Sense (21 x 17.5 x 15 mm stack, OV3660/OV2640), WiFi stream, 5 V from the forearm
     cam_x=54.0, cam_tilt=15.0, cam_board=(21.0, 17.5, 11.0),     # (camera and TX driver removed from the flange in v1.36, to be added later)
     pulley_gap=2.5,                                          # room for the wave spring between pulley and the 6 mm plate
     # ulna / radius plates, belts, motors
-    yoke_t=10.0, yoke_len=176.0, belt_teeth=200, cover=(90.0, 4.0),       # v1.35: 176 long, 200T (400 mm) steel-cord belts: the same belt as the four elbow belts
-    fore_w=45.0, fore_wz=-45.0, fore_bolts=((29.0, -55.0), (36.0, -169.0), (-29.0, -55.0), (-36.0, -169.0)),   # plate half-width below the pulleys, M5 through-bolts
+    yoke_t=10.0, yoke_len=161.0, belt_teeth=200, cover=(90.0, 4.0),       # v1.35: 176 long, 200T (400 mm) steel-cord belts: the same belt as the four elbow belts
+    fore_w=45.0, fore_wz=-45.0, fore_bolts=((29.0, -55.0), (36.0, -180.0), (-29.0, -55.0), (-36.0, -180.0)),   # plate half-width below the pulleys, M5 through-bolts
     belt_w=10.0, belt_t=1.5, bore_clear=12.6, motor_sq=42.3, motor_len=40.0, motor_shaft_d=5.0, motor_hole=31.0,   # NEMA17 (recycled)
    
     mp_od=12.2, mp_flange_od=16.0, mp_w=12.0, mp_teeth=20,   # v1.34: 20T GT2 motor pulley (steel-cord belts need >= 20T)
     # one adjustable tensioner per belt: smooth idler on the belt back, outside the loop, on the front strand
-    tens_r=6.0, tens_z=-92.0, tens_d0=7.0, tens_adj=2.5, pulley_teeth=100,   # v1.34: 100T belt pulley on the side bevel (100/20 = 5:1)
+    tens_r=6.0, tens_z=-92.0, tens_d0=7.0, tens_adj=2.5, pulley_teeth=100, fore_full_z=-125.0, base_t=10.0, base_scr=(13.0, 33.0),   # v1.34: 100T belt pulley on the side bevel (100/20 = 5:1)
     # inductive link: PCB coils (electronics/coil_pcb: 4-layer ring boards, Ø43.6 / Ø15.6 x 1.6) face to face, 1 mm gap,
     # each backed by 2-3 rings of flexible ferrite sheet (0.6 mm) on 0.2 mm adhesive, in a pocket of the flange boss and of
     # the hand bottom; raised 3 mm above the 6810 so the steel bearing is out of the field.
@@ -174,11 +174,12 @@ def round_plan(solid, hx, hy, R, axis_r, z0, z1):
 def build(p=P):
     parts = {}
     # ---------- bevel gears ----------
-    pair = BevelGearPair(p['module'], p['teeth'], p['teeth'], p['face'], axis_angle=90.0,
+    pair = BevelGearPair(p['module'], p['teeth_out'], p['teeth'], p['face'], axis_angle=90.0,
                          pressure_angle=p['pressure'], helix_angle=p['helix'], backlash=p['backlash'])
     asm = pair.assemble(gear_build_args={'bore_d': p['bore_d']}, pinion_build_args={'bore_d': p['bore_clear']})
     kids = {c.name: c for c in asm.children}
-    h = float(pair.gear.cone_h)                    # apex distance of the heel back plane
+    h = float(pair.gear.cone_h)                    # apex distance of the heel back plane of the roll gear (height)
+    hx = float(pair.pinion.cone_h)                 # v1.40: apex distance of the side-gear heels (width); = h when 1:1
     C0 = kids['gear'].obj.moved(kids['gear'].loc)
     A0 = kids['pinion'].obj.moved(kids['pinion'].loc)
     B0 = A0.rotate(cq.Vector(0, 0, 0), cq.Vector(0, 0, 1), 180)
@@ -224,8 +225,8 @@ def build(p=P):
     sd, bo, bw, seat = p['shaft_d']/2, p['brg_od']/2, p['brg_w'], fseat(p['brg_od'])
     rsd, rbo, rbw = p['roll_shaft_d']/2, p['rbo']/2, p['rbw']; rseat = fseat(p['rbo'])
     xr = lambda a, b: sorted((a, b))
-    xc = h + p['mp_w']/2 + 0.5                                         # belt plane: the pulley starts at the bevel heel (v1.36, motors side by side)
-    pul_in = h                                     # pulley starts right at the gear heel (no neck)
+    xc = hx + 3.0 + p['mp_w']/2                                         # v1.40: belt plane just past a 3 mm ramp off the bevel heel
+    pul_in = hx + 3.0                              # the pulley starts where the ramp ends
     pul_out = xc + p['mp_w']/2
     # EXOSKELETON layout: ulna and radius are the outermost parts. From the centre: bevel, pulley, flange wall, bone.
     wall_in = pul_out + 1.0; wall_out = wall_in + p['wall_t']   # flange walls INSIDE ulna and radius
@@ -240,8 +241,17 @@ def build(p=P):
     def side_part(shape, sg):
         bb = shape.BoundingBox()
         toe = min(abs(bb.xmin), abs(bb.xmax))
-        pu = cyl_x(*xr(sg*pul_in, sg*(pul_out-fl)), rb).union(cyl_x(*xr(sg*(pul_out-fl), sg*pul_out), rf))
-        body = cq.Workplane('XY').newObject([shape]).union(pu, clean=False)
+        # v1.40: the tooth gaps run out on a cone from the root at the heel up to the pulley flange (no step at the tooth ends)
+        rr_ = Rh - 2.25*p['module']
+        ramp = cq.Workplane('XY').newObject([cq.Solid.makeCone(rr_, rf, pul_in - hx + 0.01, cq.Vector(sg*(hx - 0.01), 0, 0), cq.Vector(sg, 0, 0))])
+        pu = (ramp.union(cyl_x(*xr(sg*pul_in, sg*(pul_in+fl)), rf)).union(cyl_x(*xr(sg*(pul_in+fl), sg*(pul_out-fl)), rb))
+              .union(cyl_x(*xr(sg*(pul_out-fl), sg*pul_out), rf)))
+        # v1.40: the teeth run on past the heel into the pulley: the heel cross-section carried on out to the pulley flange
+        O_, Y_ = cq.Vector(0, 0, 0), cq.Vector(0, 1, 0)
+        g_ = shape.rotate(O_, Y_, -90*sg)                                    # gear axis -> +Z
+        ext_ = cq.Workplane('XY').add(g_).section(hx - 0.05).extrude(pul_in - hx + 0.55).intersect(cyl_z(hx - 1, pul_in + 2, rf))
+        run_ = ext_.val().rotate(O_, Y_, 90*sg)
+        body = cq.Workplane('XY').newObject([shape]).union(pu, clean=False).union(cq.Workplane('XY').newObject([run_]), clean=False)
         body = body.cut(cyl_x(-80, 80, p['bore_clear']/2), clean=False)
         body = body.cut(cyl_x(*xr(sg*(toe-0.2), sg*(toe+bw+0.2)), seat), clean=False)
         body = body.cut(cyl_x(*xr(sg*(pul_out-xsp-bw-0.2), sg*(pul_out+0.2)), seat), clean=False)
@@ -306,8 +316,8 @@ def build(p=P):
     # THREE pieces that print flat: the plate (ring-bearing boss, coil pocket) and two walls (axle bore as a true circle)
     er = p['ear_r']
     car = bx(-wall_in, wall_in, -cy2, cy2, plate_z0, plate_z1)
-    wall_scr = [(-(cy2-10.0), (plate_z0+plate_z1)/2), (cy2-10.0, (plate_z0+plate_z1)/2), (0.0, (plate_z0+plate_z1)/2)]
-    wprof = _hull(_circ(0.0, 0.0, er) + [(cy2-6.0, plate_z0-6.0), (cy2-6.0, plate_z1), (-(cy2-6.0), plate_z1), (-(cy2-6.0), plate_z0-6.0)])
+    wall_scr = [(-(cy2-14.0), (plate_z0+plate_z1)/2), (cy2-14.0, (plate_z0+plate_z1)/2), (0.0, (plate_z0+plate_z1)/2)]
+    wprof = _hull(_circ(0.0, 0.0, er) + _circ(cy2-6.0, plate_z1-6.0, 6.0) + _circ(-(cy2-6.0), plate_z1-6.0, 6.0) + [(cy2, plate_z0-6.0), (-cy2, plate_z0-6.0)])   # v1.40: as the elbow walls, as wide as the hand
     for sg, nm in ((-1, 'L'), (1, 'R')):
         wl = prism_yz(wprof, *xr(sg*wall_in, sg*wall_out)).cut(cyl_x(*xr(sg*(wall_in-1), sg*(wall_out+1)), sd))
         wl = wl.cut(cq.Workplane('XZ').workplane(offset=-(er+1)).center(sg*(wall_in+wall_out)/2, 0).circle(R_TAP3).extrude(er+1-sd+0.5))   # M3 grub on the axle flat
@@ -326,7 +336,7 @@ def build(p=P):
     for d_ in (-20.0, 20.0):                                                             # TX coil leads: one hole under each pad -> driver
         lx_, ly_ = (p['pad_r']+0.6)*math.cos(math.radians(p['tx_pad_az']+d_)), (p['pad_r']+0.6)*math.sin(math.radians(p['tx_pad_az']+d_))
         car = car.cut(cyl_z(plate_z0-1, bt-pocket+0.5, 1.3, cx=lx_, cy=ly_))
-    car = round_plan(car, wall_in, cy2, 10.0, er+0.01, -er-5.0, bt+5.0)             # rounded corners seen from above
+    car = round_plan(car, wall_in, cy2, 12.0, er+0.01, -er-5.0, bt+5.0)             # rounded corners seen from above
     for sg in (-1, 1):                                                    # v1.34: shallow groove for the bigger belt pulleys (they turn about the axle)
         car = car.cut(cyl_x(*xr(sg*(pul_in - 1.0), sg*(pul_out + 1.0)), rf_p + 1.0))
     parts['carrier_flange'] = car.val()
@@ -355,67 +365,59 @@ def build(p=P):
     mface = xc - p['mp_w']/2 - 1.5                                        # motor face just inside the pulley; the motor reaches past the centre
     tens_cu = rot2(*tens_cn, psi); tens_nu = rot2(*tens_n, psi)
     pk_u = [(ymc, zmc - 14.5), (ymc, zmc + 14.5)]
+    # v1.40: ulna / radius shaped like the upper-arm bones: a round top on the pitch bearing, ONE straight smooth flare to
+    # the full width (reached above the motor screws), straight down to the foot; round holes on the centre line where
+    # nothing else is. No through-bolts (the flange at the top and the forearm base at the foot tie the pair; covers later).
+    # Printed flat, no overhangs.
+    bw_ = p['fore_w']
+    zfoot = -p['yoke_len'] - p['base_t']
+    zbs_ = -p['yoke_len'] - p['base_t']/2                               # forearm base screws (M4, into inserts)
+    bscr_ = [s_*y_ for y_ in p['base_scr'] for s_ in (-1, 1)]
+    (tcy, tcz), (tny, tnz) = tens_cu, tens_nu; ta = p['tens_adj']
+    zfull = min(z_ for _, z_ in list(scr) + pk_u) * 0 + p['fore_full_z']   # where the flare reaches the full width
+    hwf = lambda z_: Rh if z_ >= 0 else (Rh + (bw_ - Rh)*min(1.0, z_/zfull))
+    top_ = [(Rh*math.cos(math.radians(a_)), Rh*math.sin(math.radians(a_))) for a_ in range(0, 180, 6)]
+    oprof = top_ + [(-Rh, 0.0), (-bw_, zfull), (-bw_, zfoot), (bw_, zfoot), (bw_, zfull)]
+    fun_ = [(yy, zz, R_M3) for yy, zz in list(scr) + pk_u] + [(tcy + s_*tny*ta, tcz + s_*tnz*ta, R_M5) for s_ in (-1, 1)]
+    for yy, zz, rr in fun_:
+        assert hwf(zz) - abs(yy) - rr >= 4.0, f'forearm bone too narrow at ({yy:.1f}, {zz:.1f})'
+    fkeep = [(0.0, 0.0, seat + 6.0), (0.0, -33.0, 7.0), (0.0, -41.0, 7.0)] + [(yy, zz, rr + 6.0) for yy, zz, rr in fun_]
+    fkeep += [(yy, zbs_, 8.0) for yy in bscr_] + [(0.0, -p['yoke_len'] - 3.0, 10.0)]
+    fholes = []
+    z_ = -seat - 10.0
+    while z_ > zfoot + 20.0:
+        placed_ = False
+        d_ = min(0.5*2*hwf(z_), 30.0)
+        while d_ >= 16.0:
+            c_ = z_ - d_/2
+            if c_ - d_/2 > zfoot + 14.0 and all(math.hypot(yy, c_ - zz) > d_/2 + rr for yy, zz, rr in fkeep):
+                fholes.append((c_, d_/2)); z_ = c_ - d_/2 - 8.0; placed_ = True; break
+            d_ -= 2.0
+        if not placed_: z_ -= 1.0
+    # a hole that ends up between the motor screws moves sideways, onto the axis of the OTHER motor (no screws there),
+    # with the same diameter as the others
+    zs_ = [zz for _, zz in list(scr) + pk_u]
+    fholes = [(0.0, c_, r_) for c_, r_ in fholes]
+    rh_ = max(h[2] for h in fholes)
+    fholes = [(-ymc, zmc, rh_) if min(zs_) - 5.0 < c_ < max(zs_) + 5.0 else (y_, c_, r_) for y_, c_, r_ in fholes]
+    assert bw_ - ymc - rh_ >= 6.0, 'moved hole too near the edge'
     def plate(x0, x1, sg):
-        # the plate is as wide as the pulley at the top and widens below the pulleys to carry the through-bolts beside the motors
-        bw_, bz_ = p['fore_w'], p['fore_wz']
-        rh_ = [(Rh, 18.0), (Rh, bz_ + 26.0), (bw_, bz_), (bw_, -p['yoke_len']-8.0)]
-        # v1.38 'mech': straight facets, no smoothing
-        y = prism_yz(rh_ + [(-a_, b_) for a_, b_ in reversed(rh_)], x0, x1)
-        oc_ = octagon(0.0, 0.0, Rh*math.cos(math.radians(22.5)))          # v1.38: top faceted, an octagon inside the old R (flange clears)
-        y = y.cut(bx(x0-1, x1+1, -Rh-1, Rh+1, 0.0, 20.0).cut(prism_yz(oc_, x0-2, x1+2)))
-        # ulna and radius are ONE part (v1.30): every hole is cut in both, the plate is simply used on either side
-        y = y.cut(bx(x0-1, x1+1, -4.2, 4.2, -p['yoke_len']-9, -p['yoke_len']+13.0))             # cable notch at the foot (used on the ulna)
-        (tcy, tcz), (tny, tnz) = tens_cu, tens_nu; ta = p['tens_adj']
-        y = y.cut(prism_yz(_hull(_circ(tcy-tny*ta, tcz-tnz*ta, R_M5) + _circ(tcy+tny*ta, tcz+tnz*ta, R_M5)), x0-1, x1+1))   # M5 slot
-        y = y.cut(cyl_x(x0-1, x1+1, seat))                                # 6801 in a through bore (laser cut, reamed; Loctite 638)
+        y = prism_yz(oprof, x0, x1)
+        X0, X1 = x0 - 1, x1 + 1
+        y = y.cut(cyl_x(X0, X1, 4.0).translate((0, 0, -p['yoke_len'] - 3.0)))           # cable exit, level with the groove in the forearm base (used on the ulna)
+        y = y.cut(prism_yz(_hull(_circ(tcy-tny*ta, tcz-tnz*ta, R_M5) + _circ(tcy+tny*ta, tcz+tnz*ta, R_M5)), X0, X1))   # M5 slot
+        y = y.cut(cyl_x(X0, X1, seat))                                    # 6801 in a through bore (reamed; Loctite 638)
         for zz in (-33.0, -41.0):
-            y = y.cut(cyl_x(x0-1, x1+1, R_TAP3).translate((0, 0, zz)))                   # tapped M3, pitch-encoder bracket (used on the radius)
-        for yy, zz in scr: y = y.cut(cyl_x(x0-1, x1+1, R_M3).translate((0, yy, zz)))
-        for yy in (-19.0, -9.0, 9.0, 19.0):                            # 4x M3 into inserts in the side of the forearm base
-            y = y.cut(cyl_x(x0-1, x1+1, R_M3).translate((0, yy, -p['yoke_len']-4.0)))
-        for yy, zz in p['fore_bolts']: y = y.cut(cyl_x(x0-1, x1+1, R_M5).translate((0, yy, zz)))   # 4 M5 through-bolts (no covers)
-        for yy, zz in pk_u: y = y.cut(cyl_x(x0-1, x1+1, R_M3).translate((0, yy, zz)))   # 2x M3 for the bearing block of the motor shaft
-        for (a_, b_), w_ in truss:                                        # diagonal mech windows, pointed ends (v1.38)
-            y = y.cut(prism_yz(mech_slot(a_, b_, w_), x0-1, x1+1))
+            y = y.cut(cyl_x(X0, X1, R_TAP3).translate((0, 0, zz)))                     # tapped M3, pitch-encoder bracket (used on the radius)
+        for yy, zz in scr: y = y.cut(cyl_x(X0, X1, R_M3).translate((0, yy, zz)))
+        for yy in bscr_:                                                  # 4x M4 into inserts in the side of the forearm base
+            y = y.cut(cyl_x(X0, X1, 2.2).translate((0, yy, zbs_)))
+        for yy, zz in pk_u: y = y.cut(cyl_x(X0, X1, R_M3).translate((0, yy, zz)))   # 2x M3 for the bearing block of the motor shaft
+        for hy_, c_, r_ in fholes: y = y.cut(cyl_x(X0, X1, r_).translate((0, hy_, c_)))      # lightening holes
         if sg > 0: y = y.mirror('XZ')                                     # the radius is the ulna turned over: features at -Y
         return y.val()
-    # truss slots: diagonal, alternating, kept 5 mm from the edge and from every hole (printed PETG-CF plates, v1.32)
-    bw_, bz_ = p['fore_w'], p['fore_wz']
-    rh_ = [(Rh, 18.0), (Rh, bz_ + 26.0), (bw_, bz_), (bw_, -p['yoke_len']-8.0)]
-    fprof = [q_ for q_ in rh_ if q_[1] < -Rh] + [(-a_, b_) for a_, b_ in reversed(rh_) if b_ < -Rh]   # below the rounded top
-    fprof = fprof + [(-Rh, -Rh)] + [(Rh, -Rh)]
-    def _ds(p_, a_, b_):
-        ab = (b_[0]-a_[0], b_[1]-a_[1]); t_ = max(0.0, min(1.0, ((p_[0]-a_[0])*ab[0] + (p_[1]-a_[1])*ab[1])/(ab[0]**2 + ab[1]**2 + 1e-12)))
-        return math.hypot(p_[0] - a_[0] - t_*ab[0], p_[1] - a_[1] - t_*ab[1])
-    fedge = lambda q_: min(_ds(q_, fprof[i], fprof[(i+1) % len(fprof)]) for i in range(len(fprof)))
-    (tcy, tcz), (tny, tnz) = tens_cu, tens_nu; ta = p['tens_adj']
-    fkeep = [(0.0, 0.0, seat + 6.0), (0.0, -33.0, 6.5), (0.0, -41.0, 6.5), (tcy-tny*ta, tcz-tnz*ta, 8.0), (tcy+tny*ta, tcz+tnz*ta, 8.0)]
-    fkeep += [(yy, zz, 7.0) for yy, zz in scr] + [(yy, zz, 7.0) for yy, zz in pk_u]
-    fkeep += [(yy, -p['yoke_len']-4.0, 7.0) for yy in (-19.0, -9.0, 9.0, 19.0)] + [(yy, zz, 8.0) for yy, zz in p['fore_bolts']]
-    fkeep += [(0.0, -p['yoke_len'] + z_, 9.5) for z_ in range(-8, 18, 4)]   # cable notch
-    truss = []
-    def fslot(c_, ang_, lens_, w_):
-        for L_ in lens_:
-            d_ = (math.sin(math.radians(ang_))*L_/2, math.cos(math.radians(ang_))*L_/2)
-            p0_, p1_ = (c_[0]-d_[0], c_[1]-d_[1]), (c_[0]+d_[0], c_[1]+d_[1])
-            smp_ = [(p0_[0] + (p1_[0]-p0_[0])*i/8, p0_[1] + (p1_[1]-p0_[1])*i/8) for i in range(9)]
-            if any(fedge(q_) < w_/2 + 5.0 for q_ in smp_) or any(q_[1] > -Rh - 2.0 for q_ in smp_): continue
-            if any(_ds((y_, z_), p0_, p1_) < w_/2 + r_ for y_, z_, r_ in fkeep): continue
-            if any(min(_ds(q_, s0_, s1_) for q_ in smp_) < w_/2 + sw_/2 + 5.0 for (s0_, s1_), sw_ in truss): continue
-            truss.append(((p0_, p1_), w_)); return True
-        return False
-    for sgn_ in (1, -1):                                                  # a V of two diagonal slots under the pitch bearing,
-        fslot((sgn_*12.0, -60.0), sgn_*20.0, (22.0, 20.0), 9.0)    # and one slot each side of the motor
-        fslot((sgn_*27.0, -112.0), 0.0, (24.0, 18.0, 12.0), 8.0)
-        fslot((sgn_*30.0, -140.0), sgn_*15.0, (30.0, 22.0, 14.0), 8.0)
     parts['ulna'] = plate(-u1, -u0, -1)
     parts['radius'] = parts['ulna'].rotate(cq.Vector(0, 0, 0), cq.Vector(0, 0, 1), 180)   # the same part, turned over
-    # no covers (v1.31): four M5 through-bolts tie ulna and radius, two on each side, beside the motors; printed tube between the bones
-    for k, (yy, zz) in enumerate(p['fore_bolts'], start=1):
-        sgk = 1 if yy > 0 else -1
-        parts[f'tube_bolt_fore_{k}'] = cyl_x(-u0, u0, 5.0, 2.7).translate((0, yy, zz)).val()
-        parts[f'screw_bolt_fore_{k}_M5'] = cyl_x(*xr(sgk*(u1+2.75), -sgk*(u1+6.0)), 2.5).union(cyl_x(*xr(sgk*u1, sgk*(u1+2.75)), 4.75)).translate((0, yy, zz)).val()
-        parts[f'screw_bolt_fore_{k}_nut_M5'] = cyl_x(*xr(-sgk*u1, -sgk*(u1+4.7)), 4.6, 2.5).translate((0, yy, zz)).val()
     for bn in ('ulna', 'radius'):
         for k, (yy, zz) in enumerate(scr, start=1):                    # motor stand-offs, printed PETG-CF (100% infill)
             sgb = -1 if bn == 'ulna' else 1
@@ -480,7 +482,7 @@ def build(p=P):
                                     .cut(bx(4.0, 7.0, -7.0, 7.0, toe_c-0.5, h+hl+0.5)).cut(bx(5.0, 7.0, -7.0, 7.0, z_hb0+HAND['bot_t']-(HAND['hub_h']-HAND['hub_fl'][1])+1.0, z_hb0+HAND['bot_t']+HAND['hub_fl'][1]+1)).val())   # flats: 2 mm under gear C, 1 mm for the hub set screws
     skirt_depth = z_hb0 - (plate_z1 + sh + 0.0)
     hparts, hinfo, apple = build_hand(z_hb0, rx=dict(depth=pocket, wire=(p['pad_r']+0.6, p['rx_pad_az']), r_out=p['ferrite_od']/2+0.1, r_in=p['ferrite_id']/2-0.1,
-                                      shaft_r=rsd+0.1, plate_r=p['ring_od']/2+2.5, skirt_in=fseat(p['ring_od']), skirt_depth=skirt_depth))
+                                      shaft_r=rsd+0.1, plate_r=max(p['ring_od']/2+2.5, HAND['frame_r']), skirt_in=fseat(p['ring_od']), skirt_depth=skirt_depth))
     parts.update(hparts)
 
     # ---------- cables: harness out of the forearm base (centre hole), up the ulna, across the pitch axis ON the axle
@@ -558,7 +560,7 @@ def material(n):
     """'printed' (gunmetal PETG/PA-CF), 'gear' (printed gears/pulleys, a shade lighter), 'tpu', 'steel' (brushed), or None"""
     if n.startswith('hand_finger_flex'): return 'tpu'
     if n.startswith(('brg', 'T_brg', 'pitch_axle', 'pre_', 'T_idle_tube', 'carrier_spacer', 'screw', 'mpulley', 'hand_pin', 'hand_thrust',
-                     'hand_motor_shaft', 'roll_shaft', 'idler_', 'hand_worm', 'hand_shaft_hub', 'hand_brg', 'spacer_')) or n.endswith('_smooth') or 'nut_M5' in n or (n.startswith('motor_') and n.endswith('_shaft')) or 'screw' in n:
+                     'hand_motor_shaft', 'roll_shaft', 'idler_', 'hand_worm', 'hand_shaft_hub', 'hand_brg', 'spacer_', 'hand_servo_coupler')) or n.endswith('_smooth') or 'nut_M5' in n or (n.startswith('motor_') and n.endswith('_shaft')) or 'screw' in n:
         return 'steel'
     if n.startswith(('gear_', 'idle_gear')): return 'gear'
     if n.startswith(('ulna', 'radius')): return 'printed'                 # PETG-CF since v1.32
@@ -607,6 +609,9 @@ def _base_color(n):
     if n == 'hand_limit_switch': return '#1e1e1e'
     if n.startswith('hand_worm'): return '#d9a21b'
     if n in ('hand_gearmotor_25mm', 'hand_motor_shaft'): return '#5b6470'
+    if n == 'hand_servo_sts3215': return '#2e3238'
+    if n == 'hand_servo_coupler': return ALU
+    if n in ('hand_mcu_board_esp32s3', 'hand_power_board'): return PCB_DARK
     if n == 'hand_rx_driver_board': return PCB_DARK
     if n == 'hand_bulk_cap': return '#2a2a2a'
     if n == 'hand_body': return GUN_1
@@ -653,8 +658,8 @@ def pose(parts, pitch_deg=0.0, roll_deg=0.0, theta=None, info=None):
     for n, s in parts.items():
         g = group(n)
         if g == 'fixed': out[n] = s
-        elif g == 'A': out[n] = s.rotate(O, X, pitch_deg + ROLL_SIGN*roll_deg)
-        elif g == 'B': out[n] = s.rotate(O, X, pitch_deg - ROLL_SIGN*roll_deg)
+        elif g == 'A': out[n] = s.rotate(O, X, pitch_deg + ROLL_SIGN*roll_deg*P['teeth_out']/P['teeth'])   # v1.40: 32/24 bevels
+        elif g == 'B': out[n] = s.rotate(O, X, pitch_deg - ROLL_SIGN*roll_deg*P['teeth_out']/P['teeth'])
         elif g == 'worm': out[n] = s.rotate(O, Z, hi['s_w']*(theta-hi['theta0'])*hi['zt'] + roll_deg).rotate(O, X, pitch_deg)
         elif g == 'finger':
             pv, ax = hi['fingers'][n]; e = (pv[0]+ax[0], pv[1]+ax[1], pv[2]+ax[2])

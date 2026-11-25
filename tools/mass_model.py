@@ -13,12 +13,13 @@ import arm_v0 as A
 
 RHO = dict(printed=1.27*0.55, gear=1.27*0.85, tpu=1.21*0.45, steel=7.85, alu=2.70)     # g/cm3 (printed: 4 walls + 40% infill)
 OVERRIDE = [  # (substring of the part name, grams) for bought parts modelled as plain blocks; first match wins
-    ('NEMA23', 700.0), ('gearbox_shoulder_A_planetary', 750.0), ('gearbox_shoulder_B_planetary', 750.0), ('foot_yaw_gearbox', 400.0),
+    ('yaw_elbow_motor', 390.0), ('NEMA23', 700.0), ('gearbox_shoulder_A_planetary', 750.0), ('gearbox_shoulder_B_planetary', 750.0), ('foot_yaw_gearbox', 400.0),
     ('gearbox_elbow', 300.0), ('elbow_gearbox_A_planetary', 300.0), ('elbow_gearbox_B_planetary', 300.0), ('NEMA17', 280.0), ('flange_hub', 150.0),
-    ('hand_gearmotor', 91.0), ('hand_shaft_hub', 30.0), ('camera_xiao', 8.0),
+    ('hand_gearmotor', 91.0), ('hand_servo_sts3215', 55.0), ('hand_servo_coupler', 12.0), ('hand_mcu_board', 5.0), ('hand_power_board', 8.0),
+    ('hand_shaft_hub', 30.0), ('camera_xiao', 8.0),
     ('mid_pulley_A_110T', 110.0), ('mid_pulley_B_110T', 110.0), ('mid_pulley_A_20T', 15.0), ('mid_pulley_B_20T', 15.0), ('elbow_mpulley_A_20T', 15.0), ('elbow_mpulley_B_20T', 15.0),   # bought aluminium GT2 pulleys
 ]
-EXACT = {'W_hand_worm': 38.0, 'W_hand_worm_hub': 5.0}       # the bought steel worm, 43 g with its hub
+EXACT = {'W_hand_worm': 55.0, 'W_hand_worm_hub': 8.0}       # the bought steel worm (module 1.5, PD 20), about 63 g with its hub
 def density(n):
     """g/cm3 for parts that have no catalogue mass"""
     m = A.material(n)
@@ -35,7 +36,7 @@ def density(n):
 def link_of(n):
     g = A.group(n)
     if n.startswith(('wrist_ghost', 'W_apple')) or 'object' in n or 'ghost' in n: return None
-    if g in ('foot', 'yawpin'): return None
+    if g in ('foot', 'yawpin', 'yawpin2', 'yawenc'): return None
     if g in ('yaw', 'shpinA', 'shpinB'): return 1
     if g in ('arm', 'sideA', 'sideB'): return 2                 # side bevels stay on the elbow axis: mass of the upper arm
     if g in ('cradle', 'idle'): return 3
@@ -59,7 +60,7 @@ def main():
         if n.startswith('W_'): c = c + np.array([0, 0, wz])       # wrist parts are built about the wrist centre
         I = np.array(cq.Shape.matrixOfInertia(s)).reshape(3, 3)*(m/(v*1000.0))     # g mm2 about the part's own centre
         acc[k]['m'] += m; acc[k]['mc'] += m*c; acc[k]['items'].append((n, m, c, I))
-    out = dict(source='arm v0.28 / wrist v1.24', units='kg, m, kg m2; com and inertia in the link frame, inertia about the com', links={})
+    out = dict(source='arm v0.47 / wrist v1.38 / hand v3.0', units='kg, m, kg m2; com and inertia in the link frame, inertia about the com', links={})
     for k, a in acc.items():
         com = a['mc']/a['m']; I = np.zeros((3, 3))
         for n, m, c, Ip in a['items']:

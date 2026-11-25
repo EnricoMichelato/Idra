@@ -2,13 +2,13 @@
 
 Read this first when picking the project up in a new session. It says where things stand, how the repository is organised, how to regenerate and check everything, and what is still open.
 
-Last updated: 19 November 2026 · arm v0.46 · wrist v1.38 · hand v2.6 · nothing built yet; the wrist is being built first.
+Last updated: 25 November 2026 · arm v0.50 · wrist v1.40 · hand v3.0 · nothing built yet; the wrist is being built first.
 
-**Git:** v0.32 is staged in the index and not committed yet; the v0.33–v0.45 changes are in the working tree only (each version alone is in `idra-repo-v0.3x.zip`). Commit first (that records v0.32), then `git add -A` and commit again.
+**Git:** v0.46 is on GitHub (commit d39c9eb). The v0.47 to v0.50 changes are in the working tree: `git add -A` and commit.
 
 ## The robot in one paragraph
 
-Six-axis desk arm, about 700 mm reach, 500 g payload target. Base yaw (Ø320, turntable and foot in four identical printed quadrants; NEMA17 + 5:1 planetary on a 146T ring, rim rollers), shoulder (two short NEMA23 with 10:1 planetaries under the axis, each driving one bone through a 20T steel pinion on 56 teeth cut in the 4 mm steel bone, 28:1, ±90°, no spring, no brake yet), elbow bevel differential (flexion + pronation, two salvaged NEMA17 without gearbox inside the upper arm, back to back on the shoulder axis and fixed to the turret, two belt stages per side: 16T→80T outside the bone to an intermediate shaft half-way up, 20T→160T inside; the shoulder coupling is in the motor mixing), wrist bevel differential (pitch ±90° + endless roll, two salvaged NEMA17, belts 14T→78T), passive three-finger Fin Ray hand (steel worm, Ø25 75:1 gear motor). The hand gets its power through two PCB coils across the roll joint; the grip command is the frequency of that power. Bones on the outside of every joint ("exoskeleton"), in identical pairs with diagonal truss slots, tied by through-bolts (no covers): 4 mm steel in the upper arm with the shoulder teeth cut in, 10 mm printed PETG-CF in the forearm; the shoulder cheeks are 4 mm steel too (one sheet for all cut parts), printed parts in PETG / PETG-CF, gears PETG-CF or PA-CF, fingers TPU.
+Six-axis desk arm, picks on the desk fingers-down up to about 48 cm from the base (about 680 mm to the grip; the 50 cm target was dropped in v0.49), spec **1 kg at the wrist flange** plus the hand. Base yaw (Ø300, turntable and foot in four identical printed quadrants; **two** salvaged NEMA17 + 5:1 planetaries on opposite sides of a 146T ring, preloaded; 20T encoder pinion on a spring lever; rim rollers), shoulder (two short NEMA23 with 10:1 planetaries under the axis, each driving one bone through a 20T steel pinion on 56 teeth cut in the 4 mm steel bone, 28:1, ±90°; **two balance springs outside the cheek supports** + dynamic braking, no brake), elbow bevel differential (flexion + pronation; 28T side bevels on 15T satellites, module 3, spiral 35°; two **48 mm NEMA17 outside the cheeks** on the shoulder axis, Ø8 shafts through the stubs, stage 1 20T→110T inside the bones to one fixed Ø10 axle, stage 2 20T→130T on pulleys printed in one piece with the side bevels, 36:1; one tensioner per stage, smooth idlers outside the loops; motors held in one big printed support over each steel cheek; the forearm sits on a preloaded needle thrust bearing + one 6806), wrist bevel differential (pitch ±90° + endless roll; 32T side bevels in one piece with the 100T pulleys, 24T roll gear; two salvaged NEMA17, 5:1), **active three-finger Fin Ray hand** (Feetech STS3215 servo, module 1.5 steel worm, 18-tooth sector wheels, ESP32-S3 in the hand). The hand gets its power through two PCB coils across the roll joint. Bones on the outside of every joint ("exoskeleton"), in identical pairs shaped for stiffness (one straight taper, round holes on the neutral axis), tied only by the joints and the two tensioner bolts (covers planned): 4 mm steel in the upper arm with the shoulder teeth cut in, 10 mm printed PETG-CF in the forearm; the shoulder cheeks are 4 mm steel too, printed parts in PETG / PETG-CF, gears PETG-CF or PA-CF, fingers TPU.
 
 ## Ground rules
 
@@ -24,7 +24,7 @@ Six-axis desk arm, about 700 mm reach, 500 g payload target. Base yaw (Ø320, tu
 | Path | What |
 |---|---|
 | `mechanical/cad/arm_v0/arm_v0.py` | the whole arm (imports the wrist and hand); `build(P)` returns `(parts, info)`, `pose()`, `material()`, `color_of()`, `group()`, `category()`, `SKIP` |
-| `mechanical/cad/wrist_v0/wrist_v0.py` | forearm, wrist differential, flange, coils; `hand_v2.py` the hand |
+| `mechanical/cad/wrist_v0/wrist_v0.py` | forearm, wrist differential, flange, coils; `hand_v3.py` the hand (`hand_v2.py`: the old passive hand, kept for reference) |
 | `mechanical/cad/common/fit.py` | print clearances (`seat`, `boss`, insert and screw radii); calibrate with `fit_test.py` |
 | `mechanical/cad/arm_v0/viewer_build.py`, `viewer_tpl.html` | 3D viewer of the arm (`arm_3d.html`, about 9 MB); `--tpl` reuses cached meshes, `--recolor` only recolours |
 | `mechanical/cad/wrist_v0/viewer_build.py` | 3D viewer of the wrist and hand alone (`wrist_3d.html`) |
@@ -62,7 +62,7 @@ python3 tools/checks/check_kinematics.py    # FK/IK round trips, viewer vs fk, m
 node tools/checks/screenshot.js mechanical/cad/arm_v0/arm_3d.html shot.png
 ```
 
-Every check exits with code 1 if something clashes. Accepted on purpose: closed fingertips touching (skipped); belts and cables are left out of the checks (drawn approximately). Last full run (20 Nov 2026, v0.46 / v1.38 / v2.6): **no hits** in any check.
+Every check exits with code 1 if something clashes. Accepted on purpose: closed fingertips touching (skipped); belts, cables and the shoulder springs are left out of the checks (drawn approximately). Last full run (25 Nov 2026, v0.50 / v1.40 / v3.0): **no hits** (arm: elbow −130 to 120 and shoulder ±90; wrist 4 poses).
 
 After a change, also: bump the version labels (`grep -rn "wrist v1.29"`), re-export STLs and DXFs, rebuild the viewers and the site, update `base_notes.md`, `BOM.md`, `ASSEMBLY.md` as needed, and the copies of the docs in the claude.ai project.
 
@@ -70,44 +70,45 @@ After a change, also: bump the version labels (`grep -rn "wrist v1.29"`), re-exp
 
 | | |
 |---|---|
-| Link lengths | shoulder height 216, upper arm 229, forearm 266, wrist centre → grip centre 205.4 mm |
-| Ratios | yaw 48.7 (5 × 146/15), shoulder 28 (10 × 56/20, two geared motors), elbow 44 (110/20 × 160/20, two belt stages), wrist 5 (100/20) |
+| Link lengths | shoulder height 216, upper arm 249, forearm 236, wrist centre → grip centre 196 mm (hand v3.0; flange 58 mm) |
+| Ratios | yaw 48.7 (5 × 146/15), shoulder 28 (10 × 56/20, two geared motors), elbow 35.75 (110/20 × 130/20, two belt stages), wrist 5 (100/20); bevels: elbow 28/15, wrist 32/24 (roll 24/32 of the side-gear difference) |
 | Joint limits | yaw ±170, shoulder ±90, elbow −60…105, pronation ±180, wrist pitch ±90, roll endless |
-| Motor load at 500 g (worst pose) | shoulder 40% (no spring), elbow 39%, wrist 43% of the available torque (safe limit 60%); with one shoulder motor only 81% (no longer a safe fallback since the 20T pinions). Payload limit for 60%: about 0.8 kg, set by the wrist |
-| Grip | about 16 N per finger (current limit 0.78 A, R_ILIM 82 kΩ), worm self-locking |
-| Sag under 500 g at full reach | about 1.4 mm (belts dominate; joint encoders after the belts can correct it) |
-| Moving mass on the shoulder | 5.0 kg with the forearm (the elbow motors are fixed to the turret since v0.38) |
-| Widths | upper arm and elbow 139 mm across the bones, shoulder 186 mm across the stage-1 pulleys |
+| Motor load, 1 kg at the flange (worst pose) | shoulder 20% with the springs (44% without), elbow 28%, wrist 32% of the available torque (safe limit 60%). 1 kg held at the grip: wrist 71% (out of spec). Base 90° turn 0.67 s |
+| Grip | about 18 N per finger at 0.6 A servo current (about 17% of its torque), worm self-locking |
+| Sag under 500 g at full reach | about 1.1 mm (belts dominate; joint encoders after the belts can correct it) |
+| Moving mass on the shoulder | 4.8 kg with the forearm (elbow motors on the turret) |
+| Widths | upper arm and elbow 139 mm across the bones (set by the NEMA23 between them), forearm 126 mm across ulna and radius (= the elbow walls), shoulder 270 mm across the elbow motors (one big printed support over each cheek, down to the turntable) |
 
 ## Open items
 
 **Not started**
-- Firmware (stepper control, the two differentials, homing, hand frequency command, keyboard / Xbox control, link to the web simulator).
-- PCB layout of the hand board (RX) and of the flange driver (TX): only schematics exist.
-- AS5600 encoder boards small enough for the joints (16 × 18 mm and Ø12).
+- Firmware (stepper control with closed loop, the two differentials, homing, preload of the paired motors at base and shoulder, the STS3215 over the hand radio, keyboard / Xbox control, link to the web simulator).
+- **Hand board (active, v3.0):** schematic and layout (ESP32-S3, rectifier, bulk capacitor, 3.3 V buck, half-duplex servo bus). The passive DRV8871 board in `electronics/hand_passive.md` is superseded; the TX driver now runs at a fixed frequency and must give 12–15 W.
+- Encoder boards (14 bit, MT6701 / AS5047P) small enough for the joints; shoulder encoder not modelled yet.
+- Dynamic-braking relay in the base electronics.
 - Cable connectors and small-part fixings in the CAD.
 
 **Calculated but never tested** (check on the bench)
-- Coil turn counts (TX20 / RX24, spare RX28) and the hand voltage under load; coil inductance with ferrite sheet; heating of the coil boards, the roll shaft and the 6810 near the field.
-- KiCad files of the coils: parsed by a script, never opened in KiCad. Run the DRC before ordering.
+- Coil turn counts and the hand voltage under load (now 12–15 W with the servo and the ESP32-S3); heating near the field.
+- KiCad files of the coils: never opened in KiCad. Run the DRC before ordering.
 - Backlash of the printed bevels at the fingertip; belt tooth jump under stall.
-- Steel-cord belts everywhere: no pulley is smaller than 20 teeth (Ø12.7); no datasheet minimum was found for the cheap steel-cord GT2 loops, 20T is the usual conservative choice.
-- Strength of the hand turret and dome, and of the screwed joints between cradle walls and plate (no dowels; adding two Ø3 dowels per wall was offered, not done).
-- Shoulder: waterjet tooth quality on the 4 mm steel bones, mesh with the 20T module-2 pinions, backlash setting in the slots, the two motors sharing the load, gearbox backlash taken out by preloading the motors against each other. **No brake: the arm drops with the power off** until the mechanical brake on the bones is designed.
-- All six belts are 200 teeth (400 mm), steel cord. Stage-2 idlers bend the belt about 10 mm and give −2.6…+3.4 mm; stage 1 is set by sliding the intermediate hub; the wrist tensioners give only −0.5…+0.7 mm.
-- Elbow motors inside the arm hang from the stub ends on printed brackets (about 0.3 kg each): check that the bracket does not creep; the cable leaves through a window in the right bracket, check it with the real harness.
-- Intermediate shafts: printed hubs on the steel bones with two 688, stage-1 pulleys 28 mm outside the bone; check the hub does not tilt under belt tension (about 60 N stage 1, 200 N stage 2).
-- Quadrant base: the half-lap joints and wall tabs are untested; check that the turntable stays flat once the four quadrants, hub and ring gear are screwed together.
-- Fixed shoulder stubs need a small lathe job (Ø30 tube, flange, ring groove).
-- Printed forearm bones (10 mm PETG-CF) are much less stiff than aluminium; creep under constant belt tension to be watched.
-- All printed covers were removed (v0.34 upper arm, v1.31 forearm); 8 through-bolts tie the bones. New panels are left for later.
-- Mechanical brake on the shoulder bones: wanted by Enrico, not designed yet.
+- Shoulder springs: rate and geometry from a simple model (two outside, about 0.9 N/mm each, a = 55, b = 100 mm, ~80 % of the arm weight); real extension springs are not zero-length. Measure the torque left at 45° and 90°.
+- Shoulder: tooth quality on the 4 mm steel bones, mesh with the 20T pinions, the two motors sharing the load.
+- STS3215: output position on its body (11.3 mm from the near end assumed) and the spline coupler: measure before printing the hand.
+- Common intermediate axle: Ø10, belt loads near the bones; check that the clamps do not slip.
+- Elbow drive shafts: 20T pulley about 7 mm beyond the inner 688 (v0.49).
+- Pronation on a preloaded needle thrust bearing + one 6806 (v0.50): check the tilt play with 1 kg at the flange; more shims if the thrust bearing unloads on one side.
+- Teeth running on into the pulleys (v0.50): print a pair first and check the mesh near the heel.
+- Quadrant base, fixed shoulder stubs (lathe job), printed forearm bones (creep), printed cradle plate (flat 18 mm, thrust bearing sunk in its top).
+
+**Decided against / not possible**
+- Two flanges per joint (elbow and wrist): the belts run where the second flange would be.
+- Narrower upper arm: would need the NEMA23 outside the cheeks (Enrico chose to keep them inside).
 
 **Proposed and put on hold by Enrico** (do not start without asking)
-- Common fixed axle for the two intermediate pulley pairs, and tensioning both elbow belt stages with the four through-bolts, two by two, belts running inside the bolts (back-side idlers). Needs stage 1 moved inside the bones (or outer C-brackets): Enrico is thinking about it (19 Nov).
-- Staggered wrist motors for a slimmer forearm; wrist bevel module 2.5–3; elbow bevel face 16 mm and lightened side gears; one-piece hand cage.
-- Planetary 5:1 on the wrist motors (only if more payload is wanted).
-- Restyling the kinematics and electronics pages in the dark look; encoders on shoulder and base.
+- Staggered wrist motors; steel bevels later. (Next: wrist without flanges, Source Robotics style, bigger roll gear and module.)
+- Planetary 5:1 on the wrist motors (not needed for the 1 kg flange spec).
+- Restyling the kinematics and electronics pages in the dark look.
 
 ## Build plan (as agreed)
 
@@ -119,4 +120,4 @@ After a change, also: bump the version labels (`grep -rn "wrist v1.29"`), re-exp
 
 ## History in brief
 
-v0.28 print-ready pass → v0.29 overbuilt (steel gearboxes, bearings, worm hand) → v0.30 stiffness (aluminium bones, geared elbow, steel-cord belts) → v0.31 shoulder spring balancer, name IDRA, site with keyboard control → v0.32 cradle and wrist flange inside the bones, each in three flat-printed pieces; hand v2.5 turret + dome palm, v2.6 13.5 mm shorter; 14-tooth wrist pulleys; lightened cradle plate → wrist v1.29 PCB coils replace Litz coils in ferrite cups → v0.33 symmetric shoulder: two NEMA23 with brakes on steel gear sectors (13:1), no spring, shoulder 74 mm higher, elbow motors above and below the shoulder axis, base Ø250 with a 120T ring → v0.34 symmetry: elbow motors side by side with equal belts, identical teardrop bones and identical module-2 sectors, shoulder ±130° and 55 mm higher, through-bolt tensioners and standoffs instead of covers; ulna and radius one part (wrist v1.30) → v0.35: shoulder ±90° with two short NEMA23 + 5:1 planetaries on teeth cut in 4 mm steel upper-arm bones (no sectors, no brake yet), shoulder 215 mm above the desk, elbow motors higher with 400 mm belts, 8 through-bolts and no covers (wrist v1.31) → v0.36: elbow motors back beside the shoulder bearings, 82-tooth bones (29.3:1), shoulder 238.5 mm; base Ø320 with turntable and foot in four identical quadrants, 146T one-piece ring gear (48.7:1), four panels in the foot windows → v0.37: teardrop upper-arm bones and diagonal truss slots, shoulder on a taller pedestal (268.5 mm), slimmer cheeks; wrist v1.32 fully printed (10 mm PETG-CF forearm bones) → v0.38: elbow motors outside the cheeks on the shoulder axis (upper arm holds only belts), 56-tooth bones with 10:1 planetaries (40:1), shoulder 240 mm, printed PETG-CF cheeks → v0.39: elbow motors inside the upper arm, back to back on the shoulder axis (brackets on the stubs), bones 235 mm apart, upper arm 255 mm for a 700 mm reach → v0.40: no elbow gearboxes, two belt stages (16→80 outside the bone to an intermediate shaft, 20→160 inside), bones back to 139 mm → v0.41: steel cheeks (left = right), cable up through the shoulder motor block → v0.42: shoulder gearboxes straight on the turntable, shoulder 209 mm above the desk, printed feet for the steel cheeks → v0.43 / wrist v1.33: all six belts the same (190T): upper arm 226, forearm 269 (reach still 700), wrist pulley 84T (6:1) → v0.44 / wrist v1.34: steel cord everywhere with 20T small pulleys; 110T intermediate (elbow 44:1), wrist 100T (5:1), 20T shoulder pinions (28:1); upper arm 207, forearm 288 → v0.45 / wrist v1.35: belts 400 mm (200T), the common size: upper arm 229, forearm 266 → wrist v1.36: wrist motors side by side (pulleys right at the bevel heels, forearm 116 mm across instead of 149), camera and TX driver off the flange for now → wrist v1.37: the wrist motors stand upright (only the belts run slanted) → v0.46 / wrist v1.38: 'mech' styling (faceted outlines, pointed windows) on humerus, cheeks and forearm bones; bigger faceted cheeks; wrist motors touching, forearm bones ±45 mm. Details in `mechanical/cad/arm_v0/base_notes.md`.
+v0.28 print-ready pass → v0.29 overbuilt (steel gearboxes, bearings, worm hand) → v0.30 stiffness (aluminium bones, geared elbow, steel-cord belts) → v0.31 shoulder spring balancer, name IDRA, site with keyboard control → v0.32 cradle and wrist flange inside the bones, each in three flat-printed pieces; hand v2.5 turret + dome palm, v2.6 13.5 mm shorter; 14-tooth wrist pulleys; lightened cradle plate → wrist v1.29 PCB coils replace Litz coils in ferrite cups → v0.33 symmetric shoulder: two NEMA23 with brakes on steel gear sectors (13:1), no spring, shoulder 74 mm higher, elbow motors above and below the shoulder axis, base Ø250 with a 120T ring → v0.34 symmetry: elbow motors side by side with equal belts, identical teardrop bones and identical module-2 sectors, shoulder ±130° and 55 mm higher, through-bolt tensioners and standoffs instead of covers; ulna and radius one part (wrist v1.30) → v0.35: shoulder ±90° with two short NEMA23 + 5:1 planetaries on teeth cut in 4 mm steel upper-arm bones (no sectors, no brake yet), shoulder 215 mm above the desk, elbow motors higher with 400 mm belts, 8 through-bolts and no covers (wrist v1.31) → v0.36: elbow motors back beside the shoulder bearings, 82-tooth bones (29.3:1), shoulder 238.5 mm; base Ø320 with turntable and foot in four identical quadrants, 146T one-piece ring gear (48.7:1), four panels in the foot windows → v0.37: teardrop upper-arm bones and diagonal truss slots, shoulder on a taller pedestal (268.5 mm), slimmer cheeks; wrist v1.32 fully printed (10 mm PETG-CF forearm bones) → v0.38: elbow motors outside the cheeks on the shoulder axis (upper arm holds only belts), 56-tooth bones with 10:1 planetaries (40:1), shoulder 240 mm, printed PETG-CF cheeks → v0.39: elbow motors inside the upper arm, back to back on the shoulder axis (brackets on the stubs), bones 235 mm apart, upper arm 255 mm for a 700 mm reach → v0.40: no elbow gearboxes, two belt stages (16→80 outside the bone to an intermediate shaft, 20→160 inside), bones back to 139 mm → v0.41: steel cheeks (left = right), cable up through the shoulder motor block → v0.42: shoulder gearboxes straight on the turntable, shoulder 209 mm above the desk, printed feet for the steel cheeks → v0.43 / wrist v1.33: all six belts the same (190T): upper arm 226, forearm 269 (reach still 700), wrist pulley 84T (6:1) → v0.44 / wrist v1.34: steel cord everywhere with 20T small pulleys; 110T intermediate (elbow 44:1), wrist 100T (5:1), 20T shoulder pinions (28:1); upper arm 207, forearm 288 → v0.45 / wrist v1.35: belts 400 mm (200T), the common size: upper arm 229, forearm 266 → wrist v1.36: wrist motors side by side (pulleys right at the bevel heels, forearm 116 mm across instead of 149), camera and TX driver off the flange for now → wrist v1.37: the wrist motors stand upright (only the belts run slanted) → v0.46 / wrist v1.38: 'mech' styling (faceted outlines, pointed windows) on humerus, cheeks and forearm bones; bigger faceted cheeks; wrist motors touching, forearm bones ±45 mm → v0.47 / wrist v1.39 / hand v3.0: spec 1 kg at the flange and picks at 50 cm; active hand (STS3215, module 1.5 worm, sector wheels); 48 mm elbow motors outside the cheeks, stage 1 inside the bones on a common axle; four shoulder balance springs; two yaw motors + encoder pinion; pronation bearings 43 mm apart, forearm 290 → v0.48: intermediate pulley pairs turned round (stage 2 inner at the bevel heels, stage 1 outer: short drive shafts), cradle walls in, big printed motor flanges over the steel cheeks, springs at x = ±57 → v0.49: springs outside (one per side, anchor on the support, pin in the bone), stage 1 out to the stubs (shorter drive shafts), smooth neck on the elbow side bevels, cheek foot + motor flange merged into one big ribbed cheek support, stepped cradle plate, forearm 280 → v0.50 / wrist v1.40: 28/15 elbow bevels and 32/24 wrist bevels (spiral 35°, teeth running into the pulleys), 130T elbow pulleys (36:1, upper arm 249), forearm on a needle thrust bearing (no 61810), one tensioner per belt stage outside the loops, bones and cheeks reshaped for stiffness without through-bolts, forearm 236, base Ø300, Bed pose. Details in `mechanical/cad/arm_v0/base_notes.md`.

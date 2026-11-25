@@ -25,7 +25,7 @@ def beam_tip(F, M, L, EI):
     return F*L**3/(3*EI) + M*L**2/(2*EI), F*L**2/(2*EI) + M*L/EI
 
 
-def budget(payload=0.5, bone='steel', bone_t=0.004, fore='PETG_CF', fore_t=0.010, belt='gt2_10_steel', pron_span=0.019, rollers=True, wrist_belt=None):
+def budget(payload=0.5, bone='steel', bone_t=0.004, fore='PETG_CF', fore_t=0.010, belt='gt2_10_steel', pron_span=0.033, rollers=True, wrist_belt=None, el_motor=0.59):
     F = payload*G
     reach = LU + LF + D6
     rows = []                                              # (element, drop at the grip in mm, note)
@@ -51,8 +51,8 @@ def budget(payload=0.5, bone='steel', bone_t=0.004, fore='PETG_CF', fore_t=0.010
     # --- elbow: belts, steppers, bevel teeth ---------------------------------------------------
     r_p = 160*0.002/(2*math.pi)                            # pitch radius of the 160-tooth pulley
     k_belt = 2*BELT_EA[belt]/0.097*r_p**2                          # stage 2: two equal belts, 125 mm centre distance (intermediate shaft -> elbow, v0.40)
-    k_belt1 = (160/20)**2*2*BELT_EA[belt]/0.132*(110*0.002/(2*math.pi))**2   # stage 1 (20T -> 110T outside the bones), seen at the elbow
-    k_m = 2*0.30*STEPPER_POLES*K.R_EL**2                   # steppers straight on the belts (no gearbox since v0.40)
+    k_belt1 = (160/20)**2*2*BELT_EA[belt]/0.132*(110*0.002/(2*math.pi))**2   # stage 1 (20T -> 110T, inside the bones since v0.47), seen at the elbow
+    k_m = 2*el_motor*STEPPER_POLES*K.R_EL**2               # steppers straight on the belts (48 mm NEMA17, 0.59 Nm holding, v0.47)
     k_teeth = 2*2.0e6*0.040**2                             # printed module 3 teeth, two meshes (guess)
     rows.append(('elbow belts, stage 2', Me/k_belt*(LF + D6), belt))
     rows.append(('elbow belts, stage 1', Me/k_belt1*(LF + D6), belt))
@@ -64,7 +64,7 @@ def budget(payload=0.5, bone='steel', bone_t=0.004, fore='PETG_CF', fore_t=0.010
 
     # --- forearm bones --------------------------------------------------------------------------
     EI = 2*E[fore]*fore_t*0.060**3/12                       # two printed plates, about 60 mm wide on average
-    d, s = beam_tip(F, F*D6, 0.202, EI)                    # v1.35: longer forearm bones
+    d, s = beam_tip(F, F*D6, 0.216, EI)                    # v0.49: forearm 280 mm
     rows.append(('forearm bones', d + s*D6, f'{fore}, {fore_t*1000:.0f} mm'))
 
     # --- wrist: belts, steppers -----------------------------------------------------------------
@@ -81,7 +81,9 @@ def budget(payload=0.5, bone='steel', bone_t=0.004, fore='PETG_CF', fore_t=0.010
 
 
 CASES = [
-    ('as designed (v0.46): steel upper-arm bones, printed PETG-CF forearm bones, two-stage steel-cord elbow belts, two geared NEMA23', dict()),
+    ('as designed (v0.50): steel upper-arm bones, printed PETG-CF forearm bones, steel-cord belts, pronation on a preloaded thrust bearing + 6806, 48 mm elbow motors', dict()),
+    ('pronation bearings 19 mm apart (v0.46)', dict(pron_span=0.019)),
+    ('pronation bearings 43 mm apart (v0.48)', dict(pron_span=0.043)),
     ('with ordinary fibreglass GT2 belts', dict(belt='gt2_10')),
     ('with aluminium 6 mm forearm bones instead of printed', dict(fore='aluminium', fore_t=0.006)),
     ('without the rim rollers', dict(rollers=False)),

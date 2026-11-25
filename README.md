@@ -34,12 +34,12 @@ More: **[kinematics, step by step](https://enricomichelato.github.io/Idra/kinema
 ## What makes it different
 
 - **Endless roll.** The hand turns without limit: the roll joint has no end stop, and the firmware never has to unwind it.
-- **Three-finger hand.** Fin Ray fingers driven by one worm; the grip holds with the power off, and the end stop and the force limit are done in hardware.
+- **Three-finger hand.** Fin Ray fingers driven by one self-locking steel worm and a smart servo: the grip holds with the power off, and the hand knows the finger position and the grip force.
 - **Two bevel differentials.**
   - **Elbow:** flexion and pronation from two motors, module 3 spiral bevels and an idler satellite.
   - **Wrist:** pitch and roll, with its motors placed near the elbow so there is less weight at the tip.
 - **Bones on the outside.** The aluminium plates are the outermost parts at every joint, like an insect's shell; the elbow cradle and the wrist flange turn between them.
-- **Joint encoders.** Four AS5600 sensors read elbow flexion and pronation, wrist pitch and roll directly.
+- **Joint encoders.** Magnetic encoders read the joints after the belts: base, elbow flexion and pronation, wrist pitch and roll.
 - **Built from scripts.** Waterjet-cut steel and aluminium plates and about 50 printed parts that fit a 256 × 256 mm bed. Every part comes from CadQuery scripts, and a fit test coupon tunes bearing seats and holes to your printer.
 
 ## Numbers
@@ -47,12 +47,12 @@ More: **[kinematics, step by step](https://enricomichelato.github.io/Idra/kinema
 | | |
 |---|---|
 | Axes | 6: base, shoulder, elbow, pronation, wrist pitch, endless wrist roll |
-| Lengths | upper arm 229 mm, forearm 266 mm; grip centre 205 mm from the wrist centre |
-| Reach | about 700 mm to the grip; shoulder axis 216 mm above the desk |
-| Target payload | 500 g, no springs |
+| Lengths | upper arm 249 mm, forearm 236 mm; grip centre 196 mm from the wrist centre |
+| Reach | about 680 mm to the grip; picks fingers-down on the desk up to about 48 cm from the base; shoulder axis 216 mm above the desk |
+| Target payload | 1 kg at the wrist flange; gravity-balance springs at the shoulder |
 | Structure | bones in identical pairs with diagonal truss slots: upper arm and shoulder cheeks waterjet-cut 4 mm steel, with the shoulder teeth cut in the bones (`mechanical/cad/LASER_CUT.md`), forearm printed PETG-CF; through-bolts instead of covers; printed PETG / PETG-CF for the rest |
-| Motors | 2 × NEMA23 with 10:1 planetaries at the shoulder, on teeth cut in the steel bones (28:1, one per bone, ±90°), 5 × NEMA17 (base 48.7:1 with a 5:1 planetary, elbow 44:1 through two belt stages, wrist 5:1), 25 mm metal gear motor in the hand |
-| Grip | about 16 N per finger, holds 1 kg by friction (estimate) |
+| Motors | 2 × NEMA23 with 10:1 planetaries at the shoulder, on teeth cut in the steel bones (28:1, one per bone, ±90°), 6 × NEMA17 (two on the base, 48.7:1 with 5:1 planetaries, preloaded; two 48 mm at the elbow, 36:1 through two belt stages; two at the wrist, 5:1), Feetech STS3215 servo in the hand |
+| Grip | about 18 N per finger, holds about 1 kg by friction (estimate) |
 | Electronics | ESP32-S3 + 6 × TMC2209 in the base; a camera on the wrist is planned |
 | Reference printer | Elegoo Centauri Carbon |
 
@@ -60,7 +60,7 @@ More: **[kinematics, step by step](https://enricomichelato.github.io/Idra/kinema
 
 | Part | Status |
 |---|---|
-| CAD: arm v0.46, wrist v1.38, hand v2.6 | about 50 printed parts with oriented STLs, 2 DXFs (steel upper-arm bones and cheeks, 4 plates), every joint has its fasteners; nothing built yet |
+| CAD: arm v0.50, wrist v1.40, hand v3.0 | about 50 printed parts with oriented STLs, 2 DXFs (steel upper-arm bones and cheeks, 4 plates), every joint has its fasteners; nothing built yet |
 | Forward and inverse kinematics, joints → motors | done and verified (`control/`) |
 | Hand electronics | schematic with starting values, bench test pending |
 | Firmware | not started |
@@ -73,7 +73,7 @@ More: **[kinematics, step by step](https://enricomichelato.github.io/Idra/kinema
 docs/                    GitHub Pages site (built by tools/build_site.py)
 mechanical/cad/
   arm_v0/                base, shoulder, upper arm, elbow, forearm + 3D viewer (viewer_build.py)
-  wrist_v0/              wrist differential and hand (hand_v2.py, export_print.py)
+  wrist_v0/              wrist differential and hand (hand_v3.py, export_print.py; hand_v2.py kept for reference)
   common/                fit.py (print clearances) and the fit test coupon
   BOM.md                 hardware list
   LASER_CUT.md           the four aluminium bones: DXF files and finishing

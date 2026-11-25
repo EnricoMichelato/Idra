@@ -38,8 +38,8 @@ else:
         h = col.lstrip('#'); rgb = [round(int(h[i:i+2], 16)/255, 3) for i in (0, 2, 4)]
         data.append(dict(n=g_, g=g_, k=k_, c=rgb, p=base64.b64encode(V.tobytes()).decode(), i=base64.b64encode(T.tobytes()).decode()))
     K = {'__ZE__': round(info['ze'], 3), '__RB1__': round(info['ratio_belt'], 4), '__RB2__': 1.0, '__RCAP__': info['ratio_cyc'],
-         '__RYAW__': round(info['ratio_yaw'], 4), '__KP__': info['kp'], '__YPX__': info['yaw_pin_xy'][0],
-         '__YPY__': round(info['yaw_pin_xy'][1], 3), '__SH__': info['shoulder_height'], '__WZ__': round(info['wrist_z'], 3),
+         '__RYAW__': round(info['ratio_yaw'], 4), '__KP__': info['kp'], '__YPX__': round(info['yaw_pin_xy'][0], 3),
+         '__YPY__': round(info['yaw_pin_xy'][1], 3), '__YP2X__': round(info['yaw_pin2_xy'][0], 3), '__YP2Y__': round(info['yaw_pin2_xy'][1], 3), '__YEX__': round(info['yaw_enc_xy'][0], 3), '__YEY__': round(info['yaw_enc_xy'][1], 3), '__RYE__': round(info['ratio_yaw_enc'], 4), '__SH__': info['shoulder_height'], '__WZ__': round(info['wrist_z'], 3),
          '__SPY__': round(A.P['sh']['y'], 3), '__SPZ__': round(info['sh_motor_z'], 3), '__D6__': round(info['wrist']['hand']['apple'][1], 3), '__TIP__': round(info['wrist']['grip_top'], 3)}
     os.makedirs(os.path.dirname(CACHE), exist_ok=True); json.dump({'data': data, 'K': K}, open(CACHE, 'w'))
     print(len(data), 'parts', tris, 'triangles')

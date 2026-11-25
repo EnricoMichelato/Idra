@@ -27,17 +27,17 @@ HERO = """<p class="lede">A six-axis desk arm whose hand can spin forever: the w
 SECTIONS = """<section class="feat" aria-label="What makes it different">
 <article><h3>Endless roll</h3><p>The hand turns without limit, in either direction. The roll joint has no end stop, so the arm never has to stop and unwind in the middle of a task.</p></article>
 <article><h3>Two motors per joint</h3><p>Elbow and wrist are bevel differentials driven by two belts: motors turning together bend the joint, turning against each other they rotate it. The shoulder has two motors too, one on each bone, on teeth cut in the steel bones.</p></article>
-<article><h3>Built to hold 500 g</h3><p>Steel planetary gearboxes at base and shoulder, two belt stages at the elbow, steel gear teeth at the shoulder, waterjet-cut steel bones, a printed forearm, no springs. Every motor stays under half of its torque with 500 g in the hand (model estimate).</p></article>
+<article><h3>Built to hold 1 kg</h3><p>Steel planetary gearboxes at base and shoulder, two belt stages at the elbow, steel gear teeth at the shoulder, waterjet-cut steel bones, springs that balance the arm. Every motor stays well under half of its torque with 1 kg on the wrist (model estimate).</p></article>
 </section>
 <div class="cols">
 <section class="panel"><h2>Numbers</h2>
 <table class="spec"><tbody>
 <tr><td>Axes</td><td>6 + three-finger gripper</td></tr>
-<tr><td>Reach</td><td>700 mm to the grip centre</td></tr>
-<tr><td>Payload</td><td>500 g</td></tr>
-<tr><td>Grip</td><td>about 16 N per finger, holds with the power off</td></tr>
-<tr><td>Sag under 500 g</td><td>about 1.8 mm at full reach (estimate)</td></tr>
-<tr><td>Motors</td><td>2 NEMA23 + 5 NEMA17, steppers</td></tr>
+<tr><td>Reach</td><td>680 mm to the grip centre; picks on the desk up to about 48 cm away</td></tr>
+<tr><td>Payload</td><td>1 kg at the wrist</td></tr>
+<tr><td>Grip</td><td>about 18 N per finger, holds with the power off</td></tr>
+<tr><td>Sag under 500 g</td><td>about 1.2 mm at full reach (estimate)</td></tr>
+<tr><td>Motors</td><td>2 NEMA23 + 6 NEMA17, steppers; a smart servo in the hand</td></tr>
 <tr><td>Structure</td><td>Waterjet-cut steel upper-arm bones (with the shoulder teeth) and shoulder cheeks, printed PETG-CF forearm, truss-slotted bones</td></tr>
 <tr><td>Printer bed needed</td><td>256 x 256 mm</td></tr>
 </tbody></table></section>
@@ -47,7 +47,7 @@ SECTIONS = """<section class="feat" aria-label="What makes it different">
 <div class="row"><a href="REPO_URL">Source, CAD scripts and build files</a></div>
 </section>
 </div>
-<p class="foot">The simulator runs the same forward and inverse kinematics as the robot code (<code>control/kinematics.py</code>). Model: arm v0.46. © 2026 Enrico Michelato, all rights reserved.</p>"""
+<p class="foot">The simulator runs the same forward and inverse kinematics as the robot code (<code>control/kinematics.py</code>). Model: arm v0.50. © 2026 Enrico Michelato, all rights reserved.</p>"""
 
 
 def nav(current, style):

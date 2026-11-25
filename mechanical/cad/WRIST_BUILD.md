@@ -1,4 +1,6 @@
-# Wrist and hand: bench build (wrist v1.38, hand v2.6)
+# Wrist and hand: bench build (wrist v1.40, hand v3.0)
+
+> **Hand v3.0 (24 Nov 2026):** the hand is now ACTIVE: Feetech STS3215 12 V servo under a module 1.5 steel worm, three 18-tooth sector wheels, ESP32-S3 + power board in the hand, still powered only through the coils. The hand electronics below (passive DRV8871 board, frequency command) are superseded: the new hand board schematic is still to be drawn. The mechanical bench steps are unchanged.
 
 Everything needed to build the forearm, the wrist differential and the hand alone, on the bench, before the rest of the arm exists. Since wrist v1.32 the whole forearm and wrist structure is printed (PETG-CF): only bearings, shafts, belts, pulleys, motors and screws are bought.
 `python3 tools/wrist_kit.py` collects the files into `mechanical/cad/out/wrist_kit/`.
@@ -33,7 +35,7 @@ Settings as in `PRINT_LIST.md`: structural parts in PETG or PETG-CF (0.2 mm, 4 p
 |---|---|---|---|
 | `carrier_flange_x1.stl` | 1 | structural | flange plate: ring-bearing boss, TX coil pocket (2.4 mm) with two lead holes, 6 inserts in its sides |
 | `carrier_wall_L_x1.stl`, `carrier_wall_R_x1.stl` | 1 + 1 | structural | flange walls, 3 countersunk M3 each |
-| `gear_A_pulley_one_piece_x2.stl` | 2 | gear | side bevel 24T + 100T pulley |
+| `gear_A_pulley_one_piece_x2.stl` | 2 | gear | side bevel 32T + 100T pulley (teeth run into the pulley) |
 | `gear_C_output_x1.stl` | 1 | gear | roll bevel, D bore on the roll shaft |
 | `idle_gear_D_24T_x1.stl` | 1 | gear | idler bevel |
 | `T_fitting_x1.stl` | 1 | structural | carries the idler pin and the lower roll bearing |

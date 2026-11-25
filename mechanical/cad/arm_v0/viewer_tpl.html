@@ -84,7 +84,7 @@ table.spec td:last-child{font-family:var(--f-mono);font-size:12px}
 @media (max-width:560px){.bar h1{font-size:34px}.kc{width:46px;height:46px}.kc.wide{width:64px}.kc i{font-size:9px}.bar .ver{margin-left:0;text-align:left}}
 @media (prefers-reduced-motion:reduce){.kc{transition:none}.cap{transition:none}}
 </style></head><body><main>
-<header class="bar"><h1>ID<b>R</b>A</h1><span class="sub">Infinite Differential Roll Arm</span><span class="ver">arm v0.46 · wrist v1.38 · hand v2.6<br>design model, not built yet</span></header>
+<header class="bar"><h1>ID<b>R</b>A</h1><span class="sub">Infinite Differential Roll Arm</span><span class="ver">arm v0.50 · wrist v1.40 · hand v3.0<br>design model, not built yet</span></header>
 <!--SITE_NAV-->
 <!--SITE_HERO-->
 <div id="stage"><canvas id="cv"></canvas><div class="cap" id="cap"></div><div class="hint" id="hint">Drag to orbit · scroll or pinch to zoom · Shift or right button to pan</div>
@@ -116,7 +116,7 @@ table.spec td:last-child{font-family:var(--f-mono);font-size:12px}
 <section class="panel"><h2>Joints</h2>
 <div class="row"><label class="l" for="yaw">Base (yaw)</label><input id="yaw" type="range" min="-170" max="170" value="0" step="1"><span class="val" id="yv">0°</span></div>
 <div class="row"><label class="l" for="pitch">Shoulder</label><input id="pitch" type="range" min="-90" max="90" value="0" step="1"><span class="val" id="pv">0°</span></div>
-<div class="row"><label class="l" for="roll">Elbow (flexion)</label><input id="roll" type="range" min="-60" max="105" value="0" step="1"><span class="val" id="rv">0°</span></div>
+<div class="row"><label class="l" for="roll">Elbow (flexion)</label><input id="roll" type="range" min="-130" max="105" value="0" step="1"><span class="val" id="rv">0°</span></div>
 <div class="row"><label class="l" for="pron">Forearm pronation</label><input id="pron" type="range" min="-180" max="180" value="0" step="1"><span class="val" id="nv">0°</span></div>
 <div class="row"><label class="l" for="wp">Wrist pitch</label><input id="wp" type="range" min="-90" max="90" value="0" step="1"><span class="val" id="wpv">0°</span></div>
 <div class="row"><label class="l" for="wr">Wrist roll (endless)</label><input id="wr" type="range" min="-360" max="360" value="0" step="1"><span class="val" id="wrv">0°</span></div>
@@ -124,7 +124,7 @@ table.spec td:last-child{font-family:var(--f-mono);font-size:12px}
 <div class="mot" id="mot"></div>
 </section>
 <section class="panel"><h2>View</h2>
-<div class="row"><button data-v="iso">Isometric</button><button data-v="front">Front</button><button data-v="side">Side</button><button data-v="top">Top</button><button data-v="reset">Reset</button></div>
+<div class="row"><button data-v="iso">Isometric</button><button data-v="front">Front</button><button data-v="side">Side</button><button data-v="top">Top</button><button data-v="reset">Reset</button><button id="bed" aria-pressed="false" title="Park pose: folded, hand resting on the desk (motors can be switched off)">Bed</button></div>
 <div class="row wsrow"><label class="w"><input type="checkbox" id="ws"> Reachable space</label><select id="wsm" aria-label="Cloud type"><option value="0">all poses, 3D</option><option value="1">top grasp, 3D</option><option value="2">section on the arm plane</option></select></div>
 <div class="mot" id="wsinfo"></div>
 <h2 style="margin-top:14px">Layers</h2>
@@ -169,7 +169,7 @@ function look(e,t,u){let z=[e[0]-t[0],e[1]-t[1],e[2]-t[2]];let l=Math.hypot(z[0]
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const SEGS={"0":"abcdef","1":"bc","2":"abdeg","3":"abcdg","4":"bcfg","5":"acdfg","6":"acdefg","7":"abc","8":"abcdefg","9":"abcdfg","-":"g"," ":""},LIT=[1.0,0.16,0.1],DIM=[0.22,0.05,0.04];
 const ZT=14,TH0=46,SW=-1,CANT=20,WZ=__WZ__;
-const ZE=__ZE__,RB1=__RB1__,RB2=__RB2__,RCAP=__RCAP__,KP=__KP__,RYAW=__RYAW__,YPX=__YPX__,YPY=__YPY__,SH=__SH__,SPY=__SPY__,SPZ=__SPZ__;
+const ZE=__ZE__,RB1=__RB1__,RB2=__RB2__,RCAP=__RCAP__,KP=__KP__,RYAW=__RYAW__,YPX=__YPX__,YPY=__YPY__,SH=__SH__,SPY=__SPY__,SPZ=__SPZ__;const YP2X=__YP2X__,YP2Y=__YP2Y__,YEX=__YEX__,YEY=__YEY__,RYE=__RYE__;
 const cam={az:-50,el:16,d:1500,t:[0,70,190]};
 const VIEWS={iso:[-50,18],front:[-90,0],side:[0,0],top:[-90,89]};
 const vis={base:true,electronics:true,shoulder:true,upper_arm:true,elbow:true,forearm:true,belts:true,wrist:true,hand:true};
@@ -196,11 +196,12 @@ function mats(S){
 const sg=S.pitch,ep=S.roll,ps=S.yaw,ph=S.pron;
 const Ms=rx(-sg),piv=(m)=>mul(tr([0,0,ZE]),mul(m,tr([0,0,-ZE]))),Ec=piv(rx(-ep));
 const Yw=rz(ps),YP=mul(tr([YPX,YPY,0]),mul(rz(ps*RYAW),tr([-YPX,-YPY,0])));
+const YP2=mul(tr([YP2X,YP2Y,0]),mul(rz(ps*RYAW),tr([-YP2X,-YP2Y,0]))),YE=mul(tr([YEX,YEY,0]),mul(rz(ps*RYE),tr([-YEX,-YEY,0])));
 const SA=piv(rx(-ep+KP*ph)),SB=piv(rx(-ep-KP*ph)),FR=mul(Ec,piv(rz(ph))),ID=mul(Ec,piv(rz(-ph)));
 const SP=(y)=>mul(Yw,mul(tr([0,y,SPZ]),mul(rx(sg*RCAP),tr([0,-y,-SPZ]))));   // shoulder pinions: 13:1 against the steel sectors
-const M={foot:I(),desk:I(),yawpin:YP,shpinA:SP(SPY),shpinB:SP(-SPY),yaw:Yw,arm:mul(Yw,Ms),cradle:mul(Yw,mul(Ms,Ec)),idle:mul(Yw,mul(Ms,ID)),sideA:mul(Yw,mul(Ms,SA)),sideB:mul(Yw,mul(Ms,SB)),fore:mul(Yw,mul(Ms,FR))};
+const M={foot:I(),desk:I(),yawpin:YP,yawpin2:YP2,yawenc:YE,shpinA:SP(SPY),shpinB:SP(-SPY),yaw:Yw,arm:mul(Yw,Ms),cradle:mul(Yw,mul(Ms,Ec)),idle:mul(Yw,mul(Ms,ID)),sideA:mul(Yw,mul(Ms,SA)),sideB:mul(Yw,mul(Ms,SB)),fore:mul(Yw,mul(Ms,FR))};
 const wp=S.wp,wr=S.wr,g=S.grip,ww=SW*(g-TH0)*ZT,MW=mul(M.fore,tr([0,0,WZ])),MH=mul(MW,mul(rx(wp),rz(wr)));
-M.W_fixed=MW;M.W_pitch=mul(MW,rx(wp));M.W_idle=mul(MW,mul(rx(wp),rz(-wr)));M.W_A=mul(MW,rx(wp+wr));M.W_B=mul(MW,rx(wp-wr));M.W_roll=MH;M.W_worm=mul(MH,rz(ww));
+M.W_fixed=MW;M.W_pitch=mul(MW,rx(wp));M.W_idle=mul(MW,mul(rx(wp),rz(-wr)));M.W_A=mul(MW,rx(wp+wr*0.75));M.W_B=mul(MW,rx(wp-wr*0.75));M.W_roll=MH;M.W_worm=mul(MH,rz(ww));
 return {M:M,MH:MH};
 }
 // ---------- showcase animation: pick the apple, carry it, endless wrist roll, differential elbow ----------
@@ -240,6 +241,12 @@ $("pitch").addEventListener("input",ui);["wp","wr","grip"].forEach(i=>$(i).addEv
 [["base","Rotating base"],["electronics","Electronics and cables"],["shoulder","Shoulder drive"],["upper_arm","Upper arm"],["elbow","Elbow and cradle"],["forearm","Forearm"],["belts","Pulleys and belts"],["wrist","Wrist"],["hand","Hand"]].forEach(a=>{
 const l=document.createElement("label"),c=document.createElement("input");c.type="checkbox";c.checked=true;
 c.addEventListener("change",()=>{vis[a[0]]=c.checked;dirty=1;});l.appendChild(c);l.appendChild(document.createTextNode(a[1]));$("chips").appendChild(l);});
+const BED={yaw:0,pitch:38,roll:-130,pron:0,wp:-90,wr:0,grip:46};let bedPrev=null;   // sleep pose: zig-zag (upper arm forward, forearm back, hand forward)
+function setBed(on){stopAnim();if(cart.on)setCart(false);const ids=Object.keys(BED);
+ if(on){bedPrev={};ids.forEach(i=>{bedPrev[i]=$(i).value;$(i).value=BED[i];});}
+ else if(bedPrev){ids.forEach(i=>{$(i).value=bedPrev[i];});bedPrev=null;}
+ $("bed").classList.toggle("on",on);$("bed").setAttribute("aria-pressed",on);ui();dirty=1;}
+$("bed").addEventListener("click",()=>setBed(!$("bed").classList.contains("on")));
 function setView(v){cam.az=VIEWS[v][0];cam.el=VIEWS[v][1];dirty=1;}
 document.querySelectorAll("button[data-v]").forEach(bt=>bt.addEventListener("click",()=>{
 const v=bt.getAttribute("data-v");
